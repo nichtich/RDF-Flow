@@ -4,7 +4,7 @@ package RDF::Source::Union;
 #ABSTRACT: Returns the union of multiple sources
 
 use Log::Contextual::WarnLogger;
-use Log::Contextual qw(:log), -default_logger 
+use Log::Contextual qw(:log), -default_logger
     => Log::Contextual::WarnLogger->new({ env_prefix => __PACKAGE__ });
 
 use parent 'RDF::Source';
@@ -12,7 +12,10 @@ our @EXPORT = qw(union);
 
 sub new {
     my $class = shift;
-	bless { 
+
+    # TODO: support name => $name
+
+    bless {
         sources => [ map { RDF::Source::source($_) } @_ ],
         name    => 'anonymous union'
     } , $class;
@@ -22,8 +25,8 @@ sub retrieve { # TODO: try/catch errors?
     my ($self, $env) = @_;
     my $result;
 
-    log_trace { 
-        'retrieve from ' . $self->name . ' with ' . $self->size . ' sources' 
+    log_trace {
+        'retrieve from ' . $self->name . ' with ' . $self->size . ' sources'
     };
 
     if ( $self->size == 1 ) {
@@ -31,19 +34,19 @@ sub retrieve { # TODO: try/catch errors?
     } elsif( $self->size > 1 ) {
         $result = RDF::Trine::Model->new;
         foreach my $src ( @{$self->{sources}} ) { # TODO: parallel processing?
-		    my $rdf = $src->retrieve( $env );
-			next unless defined $rdf;
-			$rdf = $rdf->as_stream unless $rdf->isa('RDF::Trine::Iterator');
+            my $rdf = $src->retrieve( $env );
+            next unless defined $rdf;
+            $rdf = $rdf->as_stream unless $rdf->isa('RDF::Trine::Iterator');
 
             $result->begin_bulk_ops;
-            while (my $st = $rdf->next) { 
-                $result->add_statement( $st ); 
+            while (my $st = $rdf->next) {
+                $result->add_statement( $st );
             }
             $result->end_bulk_ops;
         }
     }
 
-    log_trace { 
+    log_trace {
         my $rdf = $result;
         $self->name . " returned " . (defined $rdf ? $rdf->size : 'no') . ' triples'
     };
@@ -64,11 +67,17 @@ It exports the function 'union' as constructor shortcut.
 
 =head1 SYNOPSIS
 
-	use RDF::Source::Union;
+    use RDF::Source::Union;
 
-	$src = union(@sources);                            # shortcut
+    $src = union(@sources);                     # shortcut
     $src = RDF::Source::Union->new( @sources ); # explicit
-	$rdf = $src->retrieve( $env );
+    $rdf = $src->retrieve( $env );
+
+=head1 EXPORTED FUNCTIONS
+
+=head2 union
+
+Shortcut for RDF::Source::Union->new.
 
 =head2 SEE ALSO
 

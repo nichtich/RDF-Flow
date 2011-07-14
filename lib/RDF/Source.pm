@@ -4,7 +4,7 @@ package RDF::Source;
 #ABSTRACT: Aggregate RDF data from diverse sources
 
 use Log::Contextual::WarnLogger;
-use Log::Contextual qw(:log), -default_logger 
+use Log::Contextual qw(:log), -default_logger
     => Log::Contextual::WarnLogger->new({ env_prefix => __PACKAGE__ });
 
 use RDF::Trine qw(iri statement);
@@ -35,7 +35,7 @@ sub new {
     my $class = ($_[0] and not ref $_[0]) ? shift : 'RDF::Source';
     my ($src, %args) = @_;
 
-	my $code;
+    my $code;
 
     if (blessed $src and $src->isa('RDF::Source')) {
         return $src; # don't wrap
@@ -53,7 +53,7 @@ sub new {
     croak 'expected RDF::Source, RDF::Trine::Model, or code reference'
         unless $code;
 
-	my $self = bless { code => $code }, $class;
+    my $self = bless { code => $code }, $class;
 
     $self->{name} = $args{name} if defined $args{name};
 
@@ -89,20 +89,20 @@ sub pipeline { RDF::Source::Pipeline->new( @_ ) }
 
 sub is_source {
     my $s = shift;
-    (ref $s and ref $s eq 'CODE') or blessed($s) and 
-	    ($s->isa('RDF::Source') or $s->isa('RDF::Trine::Model'));
+    (ref $s and ref $s eq 'CODE') or blessed($s) and
+        ($s->isa('RDF::Source') or $s->isa('RDF::Trine::Model'));
 }
 
 sub has_content { # TODO: document this
     my $rdf = shift;
     return unless blessed $rdf;
     return ($rdf->isa('RDF::Trine::Model') and $rdf->size > 0) ||
-		   ($rdf->isa('RDF::Trine::Iterator') and $rdf->peek);
+           ($rdf->isa('RDF::Trine::Iterator') and $rdf->peek);
 }
 
 sub pipe_to { # TODO: document this
     my ($self, $next) = @_;
-	return RDF::Source::Pipeline->new( $self, $next );
+    return RDF::Source::Pipeline->new( $self, $next );
 }
 
 sub dummy_source {
@@ -119,10 +119,10 @@ sub previous { $RDF::Source::PREVIOUS; }
 
 sub uri {
     carp 'please use ' . __PACKAGE__ . '::source_uri instead of ::uri';
-    return source_uri(@_); # 
+    return source_uri(@_); #
 }
 
-sub source_uri { 
+sub source_uri {
     my $env = shift;
     return (defined $env ? $env : "") unless ref $env; # plain scalar or undef
 
@@ -154,9 +154,9 @@ __END__
 
 =head1 DESCRIPTION
 
-A source returns RDF data as instance of L<RDF::Trine::Model> or 
-L<RDF::Trine::Iterator> when queried by a L<PSGI> requests. This is 
-similar to PSGI applications, which return HTTP responses instead of 
+A source returns RDF data as instance of L<RDF::Trine::Model> or
+L<RDF::Trine::Iterator> when queried by a L<PSGI> requests. This is
+similar to PSGI applications, which return HTTP responses instead of
 RDF data. RDF::Light supports three types of sources: code references,
 instances of RDF::Source, and instances of RDF::Trine::Model.
 
@@ -166,8 +166,8 @@ instances of RDF::Source, and instances of RDF::Trine::Model.
     $src = RDF::Source->new( @other_sources );
 
     # retrieve RDF data
-	$rdf = $src->retrieve( $env );
-	$rdf = $src->( $env ); # use source as code reference
+    $rdf = $src->retrieve( $env );
+    $rdf = $src->( $env ); # use source as code reference
 
     # code reference as source
     $src = sub {
@@ -178,12 +178,12 @@ instances of RDF::Source, and instances of RDF::Trine::Model.
         return $model;
     };
 
-	# RDF::Trine::Model as source returns same as the following sub:
-    $src = $model; 
+    # RDF::Trine::Model as source returns same as the following sub:
+    $src = $model;
     $src = sub {
         my $uri = RDF::Source::uri( shift );
-	    return $model->bounded_description( RDF::Trine::iri( $uri ) );
-	}
+        return $model->bounded_description( RDF::Trine::iri( $uri ) );
+    }
 
     # Check whether $src is a valid source
     RDF::Source::is_source( $src );
@@ -193,27 +193,27 @@ instances of RDF::Source, and instances of RDF::Trine::Model.
     use parent 'RDF::Source';
 
     sub retrieve {
-	    my ($self, $env) = shift;
-		# ..your logic here...
-	}
+        my ($self, $env) = shift;
+        # ..your logic here...
+    }
 
 =method new ( [ @sources ] )
 
 =method source ( [ @sources ] )
 
 Returns a new source, possibly by wrapping a set of other sources. Croaks if
-any if the passes sources is no RDF::Source, RDF::Trine::Model, or 
+any if the passes sources is no RDF::Source, RDF::Trine::Model, or
 CODE reference. This constructor can also be exported as function C<source>:
 
   use RDF::Source qw(source);
 
-  $src = source( @args );                      # short form
+  $src = source( @args );               # short form
   $src = RDF::Source->source( @args );  # equivalent
   $src = RDF:Source->new( @args );      # explicit constructor
 
 =method is_source
 
-Checks whether the object is a valid source. C<< $source->is_source >> is 
+Checks whether the object is a valid source. C<< $source->is_source >> is
 always true, but you can also use and export this method as function:
 
   use RDF::Source qw(is_source);
