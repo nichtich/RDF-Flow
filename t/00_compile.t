@@ -1,14 +1,9 @@
 use strict;
+use Test::More;
 
-my @modules;
+use_ok('RDF::Source');
+use_ok('RDF::Source::Union');
+use_ok('RDF::Source::Cascade');
+use_ok('RDF::Source::Pipeline');
 
-BEGIN { @modules = qw(
-RDF::Light
-RDF::Light::Source
-RDF::Light::Source::Union 
-RDF::Light::Source::Cascade
-); }
-
-use Test::More tests => scalar @modules;
-
-use_ok($_) for @modules;
+done_testing;
