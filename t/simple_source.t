@@ -30,6 +30,9 @@ $source = MySource->new;
 $rdf = $source->retrieve($env);
 isa_ok( $rdf, 'RDF::Trine::Model', 'simple source returns RDF::Trine::Model' );
 
+my $uri = RDF::Source::source_uri( { HTTP_HOST => "example.org", SCRIPT_NAME => '/x', } );
+is( $uri, 'http://example.org/x', 'source_uri' );
+
 done_testing;
 
 

@@ -24,7 +24,7 @@ sub new {
 sub retrieve {
     my ($self, $env) = @_;
 
-    log_trace { 'retrieve from ' . $self->name };
+    log_trace { 'retrieve from ' . sourcename($self) };
 
     foreach my $src ( @{$self->{sources}} ) {
         my $rdf = $src->retrieve( $env );
@@ -32,12 +32,7 @@ sub retrieve {
         last unless RDF::Source::has_content( $rdf );
     }
 
-    log_trace {
-        my $rdf = $env->{'rdfsource.data'};
-        $self->name . ' returned ' . (defined $rdf ? $rdf->size : 'no') . ' triples'
-    };
-
-    $env->{'rdfsource.data'};
+    $self->has_retrieved( $env->{'rdfsource.data'} );
 }
 
 sub pipeline { RDF::Source::Pipeline->new(@_) }

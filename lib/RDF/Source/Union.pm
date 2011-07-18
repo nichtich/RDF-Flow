@@ -26,7 +26,7 @@ sub retrieve { # TODO: try/catch errors?
     my $result;
 
     log_trace {
-        'retrieve from ' . $self->name . ' with ' . $self->size . ' sources'
+        'retrieve from ' . sourcename($self) . ' with ' . $self->size . ' sources'
     };
 
     if ( $self->size == 1 ) {
@@ -46,12 +46,7 @@ sub retrieve { # TODO: try/catch errors?
         }
     }
 
-    log_trace {
-        my $rdf = $result;
-        $self->name . " returned " . (defined $rdf ? $rdf->size : 'no') . ' triples'
-    };
-
-    return $result;
+    $self->has_retrieved( $result );
 }
 
 sub union { RDF::Source::Union->new(@_) }

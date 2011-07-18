@@ -8,7 +8,7 @@ use Log::Contextual qw(:log), -default_logger
     => Log::Contextual::WarnLogger->new({ env_prefix => __PACKAGE__ });
 
 use RDF::Trine qw(iri statement);
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed reftype);
 
 use RDF::Source::Union;
 use RDF::Source::Cascade;
@@ -21,10 +21,8 @@ use parent 'Exporter';
 use Carp;
 
 our @EXPORT = qw(dummy_source);
-our @EXPORT_OK = qw(source is_source dummy_source is_empty_source union cascade pipeline source_uri);
-
-# TODO: do we need this?
-use overload '&{}' => sub { return shift->retrieve(@_) }, fallback => 1;
+our @EXPORT_OK = qw(source is_source dummy_source is_empty_source union cascade pipeline 
+    source_uri sourceref sourcename has_retrieved cached);
 
 our $PREVIOUS = source( sub { shift->{'rdfsource.data'} } );
 
@@ -62,9 +60,10 @@ sub new {
 
 sub source { new(@_) }
 
-sub name {
+sub sourcename {
     my $self = shift;
-    $self->{name} ?  $self->{name} : 'anonymous source';
+    return ((reftype($self) || '') eq 'HASH' and $self->{name}) 
+        ?  $self->{name} : 'anonymous source';
 }
 
 sub size {
@@ -76,9 +75,9 @@ sub size {
 sub retrieve {
     my ($self, $env) = @_;
 
-    log_trace { 'retrieve from ' . $self->name };
+    log_trace { 'retrieve from ' . sourcename($self) };
     my $rdf = $self->{code}->( $env );
-    log_trace { $self->name . ' returned ' . (defined $rdf ? $rdf->size : 'no') . ' triples' };
+    log_trace { sourcename($self) . ' returned ' . (blessed $rdf ? $rdf->size : 'no') . ' triples' };
 
     $rdf;
 }
@@ -91,6 +90,15 @@ sub is_source {
     my $s = shift;
     (ref $s and ref $s eq 'CODE') or blessed($s) and
         ($s->isa('RDF::Source') or $s->isa('RDF::Trine::Model'));
+}
+
+sub sourceref {
+    my $source = shift;
+    return $source if ref $source and ref $source eq 'CODE';
+    return unless blessed $source;
+    $source = RDF::Source::new( $source ) if $source->isa('RDF::Trine::Model'); 
+    return unless $source->isa('RDF::Source');
+    return sub { $source->retrieve( @_ ) };
 }
 
 sub has_content { # TODO: document this
@@ -146,6 +154,39 @@ sub source_uri {
     $env->{'rdfsource.uri'} = URI->new( $base . $path )->canonical;
 
     $env->{'rdfsource.uri'};
+}
+
+# TODO: this requires Plack::Middleware::Cached
+sub cached {
+    my $source = shift;
+    my $cache  = shift;
+
+    eval { require Plack::Middleware::Cached; };
+    croak 'Caching requires Plack::Middleware::Cached' if $@;
+
+    my $name = RDF::Source::sourcename( $source );
+    my $cached = Plack::Middleware::Cached->wrap(
+        RDF::Source::sourceref( $source ),
+        key   => 'rdfsource.uri',
+        cache => $cache
+    );
+    return RDF::Source->new( 
+        sub {
+            return $cached->( @_ );
+        }, 
+        name => "cached $name"
+    );
+}
+
+# for logging
+sub has_retrieved {
+    my ($self, $result, $msg) = @_;
+    log_trace {
+        $msg = "%s returned %s" unless $msg;
+        sprintf $msg, sourcename($self),
+            (defined $result ? $result->size : 'no') . ' triples';
+    };
+    return $result;
 }
 
 1;
@@ -219,14 +260,77 @@ always true, but you can also use and export this method as function:
   use RDF::Source qw(is_source);
   is_source( $src );
 
-=function source_uri ( $env | $uri )
+=method sourceref
 
-PSGI environment
+Return a reference to a code that calls the source's retrieve method.
 
-Reuses some code from L<Plack::Request> by Tatsuhiko Miyagawa, so RDF::Source
-does not depend in Plack.
+    $source->retrieve( $env );
+    $source->sourceref->( $env ); # equivalent
 
-=function dummy_source
+This method can also be exportet as function. It is useful to retrieve from
+sources that may be code references or instances of RDF::Source:
+
+    use RDF::Source qw(sourceref);
+
+    my $s2 = RDF::Source->new( ... );
+    my $s1 = sub { ... }; 
+
+    sourceref( $s1 )->( $env );
+    sourceref( $s2 )->( $env );
+
+=head1 FUNCTIONS
+
+=head2 source_uri ( $env | $uri )
+
+Gets and or sets the request URI. You can either provide either a request URI
+as byte string, or an environment as hash reference.  The environment must be a
+specific subset of a L<PSGI> environment with the following variables:
+
+=over 4
+
+=item rdfsource.uri
+
+A request URI as byte string. If this variable is provided, no other variables
+are needed and the following variables will not modify this value.
+
+=item psgi.url_scheme
+
+A string C<http> (assumed if not set) or C<https>.
+
+=item HTTP_HOST
+
+The base URL of the host for constructing an URI. This or SERVER_NAME is
+required unless rdfsource.uri is set.
+
+=item SERVER_NAME
+
+Name of the host for construction an URI. Only used if HTTP_HOST is not set.
+
+=item SERVER_PORT
+
+Port of the host for constructing an URI. By default C<80> is used, but not
+kept as part of an HTTP-URI due to URI normalization.
+
+=item SCRIPT_NAME
+
+Path for constructing an URI. Must start with C</> if given.
+
+=item QUERY_STRING
+
+Portion of the request URI that follows the ?, if any.
+
+=item rdfsource.ignorepath
+
+If this variable is set, no query part is used when constructing an URI. 
+
+=back
+
+The method reuses code from L<Plack::Request> by Tatsuhiko Miyagawa. Note that
+the environment variable REQUEST_URI is not included. When this method
+constructs a request URI from a given environment hash, it always sets the
+variable rdfsource.uri, so it is always guaranteed to be set after calling.
+
+=head2 dummy_source
 
 This source returns a single triple such as the following, based on the
 request URI. The request URI is either taken from the PSGI request variable
@@ -236,12 +340,25 @@ request URI. The request URI is either taken from the PSGI request variable
 
 =head2 LOGGING
 
-RDF::Source uses L<Log::Contextual> for logging.
+RDF::Source uses L<Log::Contextual> for logging. By default no logging messages
+are created, unless you enable a logger.
 
 To simply see what's going on:
 
   use Log::Contextual::SimpleLogger;
   use Log::Contextual qw( :log ),
      -logger => Log::Contextual::SimpleLogger->new({ levels => [qw(trace)]});
+
+=head2 CACHING
+
+The method/function 'cached' can be used to plug a cache in front of source.
+It is based on L<Plack::Middleware::Cached> which is only required if you use
+'cached'.
+
+  use CHI;
+  my $cache = CHI->new( ... );
+
+  use RDF::Source qw(cached);
+  my $cached_source = cached( $source, $cache );
 
 =cut

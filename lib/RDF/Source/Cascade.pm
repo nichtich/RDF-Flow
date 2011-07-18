@@ -28,7 +28,7 @@ sub retrieve { # TODO: try/catch errors?
     my ($self, $env) = @_;
 
     log_trace {
-        'retrieve from ' . $self->name . ' with ' . $self->size . ' sources'
+        'retrieve from ' . sourcename($self) . ' with ' . $self->size . ' sources'
     };
 
     my $i = 1;
@@ -48,11 +48,7 @@ sub retrieve { # TODO: try/catch errors?
         $i++;
     }
 
-    log_trace {
-        $self->name . " returned $i. with " . (defined $rdf ? $rdf->size : 'no') . ' triples'
-    };
-
-    return $rdf;
+    $self->has_retrieved( $rdf, "%s returned $i. with %s" );
 }
 
 sub cascade {
