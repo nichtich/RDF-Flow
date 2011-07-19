@@ -30,7 +30,7 @@ my $bar = source \&bar, name => 'bar';
 my $empty = source sub { model(); };
 my $nil   = source sub { undef; };
 
-$src = RDF::Source::Union->new( $empty, $foo, $foo, $nil, undef, \&bar );
+$src = RDF::Source::Union->new( $empty, $foo, $foo, $nil, \&bar );
 
 $rdf = $src->retrieve( query('/foo') );
 ok($rdf);
@@ -38,6 +38,7 @@ ok($rdf);
 isomorph_graphs( $rdf, model(qw(
 http://example.org/foo x:a y:foo 
 http://example.org/foo x:a y:bar)), 'union' );
+
 
 $src = RDF::Source::Cascade->new( $empty, $foo, \&bar );
 $rdf = $src->retrieve( query('/foo') );

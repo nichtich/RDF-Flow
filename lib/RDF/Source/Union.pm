@@ -7,27 +7,36 @@ use Log::Contextual::WarnLogger;
 use Log::Contextual qw(:log), -default_logger
     => Log::Contextual::WarnLogger->new({ env_prefix => __PACKAGE__ });
 
+use RDF::Source::Util;
+use Carp;
+our @CARP_NOT = qw(RDF::Source::Util);
+
 use parent 'RDF::Source';
+
 our @EXPORT = qw(union);
 
 sub new {
     my $class = shift;
-
-    # TODO: support name => $name
+    my ($sources, $args) = sourcelist_args( @_ );
 
     bless {
-        sources => [ map { RDF::Source::source($_) } @_ ],
-        name    => 'anonymous union'
-    } , $class;
+        sources => $sources,
+        name    => ($args->{name} || 'anonymous union'),
+    }, $class;
 }
 
-sub retrieve { # TODO: try/catch errors?
+sub union { 
+    RDF::Source::Union->new(@_) 
+}
+
+sub about {
+    my $self = shift;
+    $self->name($self) . ' with ' . $self->size . ' sources';
+}
+
+sub _retrieve_rdf { # TODO: try/catch errors?
     my ($self, $env) = @_;
     my $result;
-
-    log_trace {
-        'retrieve from ' . sourcename($self) . ' with ' . $self->size . ' sources'
-    };
 
     if ( $self->size == 1 ) {
         $result = $self->[0]->retrieve( $env );
@@ -46,10 +55,8 @@ sub retrieve { # TODO: try/catch errors?
         }
     }
 
-    $self->has_retrieved( $result );
+    return $result;
 }
-
-sub union { RDF::Source::Union->new(@_) }
 
 1;
 

@@ -8,23 +8,27 @@ use Log::Contextual qw(:log), -default_logger
     => Log::Contextual::WarnLogger->new({ env_prefix => __PACKAGE__ });
 
 use parent 'RDF::Source';
+use RDF::Source::Util;
+use Carp 'croak';
+our @CARP_NOT = qw(RDF::Source::Util);
 our @EXPORT = qw(pipeline previous);
 
 sub new {
     my $class = shift;
-
-    # TODO: support name => $name
+    my ($sources, $args) = sourcelist_args( @_ );
 
     bless {
-        sources => [ map { RDF::Source::source($_) } @_ ],
-        name    => 'anonymous pipeline'
-    } , $class;
+        sources => $sources,
+        name    => ($args->{name} || 'anonymous pipeline'),
+    }, $class;
 }
 
-sub retrieve {
-    my ($self, $env) = @_;
+sub pipeline { 
+    RDF::Source::Pipeline->new(@_) 
+}
 
-    log_trace { 'retrieve from ' . sourcename($self) };
+sub _retrieve_rdf {
+    my ($self, $env) = @_;
 
     foreach my $src ( @{$self->{sources}} ) {
         my $rdf = $src->retrieve( $env );
@@ -32,12 +36,12 @@ sub retrieve {
         last unless RDF::Source::has_content( $rdf );
     }
 
-    $self->has_retrieved( $env->{'rdfsource.data'} );
+    $env->{'rdfsource.data'};
 }
 
-sub pipeline { RDF::Source::Pipeline->new(@_) }
-
-sub previous { $RDF::Source::PREVIOUS; }
+sub previous { 
+    $RDF::Source::PREVIOUS; 
+}
 
 1;
 

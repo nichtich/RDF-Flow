@@ -8,28 +8,37 @@ use Log::Contextual qw(:log), -default_logger
     => Log::Contextual::WarnLogger->new({ env_prefix => __PACKAGE__ });
 
 use parent 'RDF::Source';
-our @EXPORT = qw(cascade);
 
-use Scalar::Util 'blessed';
+use RDF::Source::Util;
 use Carp 'croak';
+our @CARP_NOT = qw(RDF::Source::Util);
+use Scalar::Util 'blessed';
+
+our @EXPORT = qw(cascade);
 
 sub new {
     my $class = shift;
-
-    # TODO: support name => $name
+    my ($sources, $args) = sourcelist_args( @_ );
 
     bless {
-        sources => [ map { RDF::Source::source($_) } @_ ],
-        name    => 'anonymous cascade'
-    } , $class;
+        sources => $sources,
+        name    => ($args->{name} || 'anonymous cascade'),
+    }, $class;
+}
+
+sub cascade {
+    RDF::Source::Cascade->new(@_)
+}
+
+sub about {
+    my $self = shift;
+    $self->name($self) . ' with ' . $self->size . ' sources';
 }
 
 sub retrieve { # TODO: try/catch errors?
     my ($self, $env) = @_;
 
-    log_trace {
-        'retrieve from ' . sourcename($self) . ' with ' . $self->size . ' sources'
-    };
+    log_trace { 'retrieve from ' . $self->about; }
 
     my $i = 1;
     my $rdf;
@@ -42,7 +51,7 @@ sub retrieve { # TODO: try/catch errors?
         } elsif ( blessed $rdf and $rdf->isa('RDF::Trine::Iterator') ) {
             last if $rdf->peek;
         } else {
-            croak 'unexpected response in source union: '.$rdf;
+            croak 'unexpected response in ' . $self->name . ': ' . $rdf;
         }
 
         $i++;
@@ -51,13 +60,7 @@ sub retrieve { # TODO: try/catch errors?
     $self->has_retrieved( $rdf, "%s returned $i. with %s" );
 }
 
-sub cascade {
-    RDF::Source::Cascade->new(@_)
-}
-
 1;
-
-__END__
 
 =head1 DESCRIPTION
 
@@ -68,8 +71,10 @@ sources.
 
     use RDF::Source::Cascade;
 
-    $src = cascade(@sources);                     # shortcut
-    $src = RDF::Source::Cascade->new( @sources ); # explicit
+    $src = cascade( @sources );                    # shortcut
+    $src = RDF::Source::Cascade->new( @sources );  # explicit
+    $src = cascade( @sources, name => 'foo' );     # with name
+
     $rdf = $src->retrieve( $env );
 
 =head1 EXPORTED FUNCTIONS

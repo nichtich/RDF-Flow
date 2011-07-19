@@ -2,7 +2,8 @@ use strict;
 use warnings;
 
 use Test::More;
-use RDF::Source qw(union dummy_source);
+use RDF::Source qw(dummy_source);
+use RDF::Source::Union;
 use RDF::Trine::Model;
 use RDF::Trine qw(iri statement);
 

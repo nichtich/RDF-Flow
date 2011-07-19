@@ -20,7 +20,6 @@ use URI::Escape;
 use parent 'Exporter';
 use Carp;
 
-our @EXPORT = qw(dummy_source);
 our @EXPORT_OK = qw(source is_source dummy_source is_empty_source union cascade pipeline 
     source_uri sourceref sourcename has_retrieved cached);
 
@@ -45,15 +44,16 @@ sub new {
     } elsif ( ref $src and ref $src eq 'CODE' ) {
         $code = $src;
     } elsif (not defined $src) {
+        carp 'Missing source in plain RDF::Source'
+            if $class eq 'RDF::Source';
         $code = sub { }; # TODO: warn?
+    } else {
+        croak 'expected RDF::Source, RDF::Trine::Model, or code reference'
     }
 
-    croak 'expected RDF::Source, RDF::Trine::Model, or code reference'
-        unless $code;
-
-    my $self = bless { code => $code }, $class;
-
+    my $self = bless { }, $class;
     $self->{name} = $args{name} if defined $args{name};
+    $self->{code} = $code;
 
     $self;
 }
@@ -66,6 +66,9 @@ sub sourcename {
         ?  $self->{name} : 'anonymous source';
 }
 
+*name  = *sourcename;
+*about = *name;
+
 sub size {
     my $self = shift;
     return 1 unless $self->{sources};
@@ -74,12 +77,15 @@ sub size {
 
 sub retrieve {
     my ($self, $env) = @_;
+    log_trace { 
+        sprintf "retrieve from %s with %s", about($self), source_uri($env);
+    };
+    $self->has_retrieved( $self->_retrieve_rdf( $env ) );
+}
 
-    log_trace { 'retrieve from ' . sourcename($self) };
-    my $rdf = $self->{code}->( $env );
-    log_trace { sourcename($self) . ' returned ' . (blessed $rdf ? $rdf->size : 'no') . ' triples' };
-
-    $rdf;
+sub _retrieve_rdf {
+    my ($self, $env) = @_;
+    return $self->{code}->( $env );
 }
 
 sub union    { RDF::Source::Union->new( @_ ) }
@@ -178,12 +184,11 @@ sub cached {
     );
 }
 
-# for logging
 sub has_retrieved {
     my ($self, $result, $msg) = @_;
     log_trace {
         $msg = "%s returned %s" unless $msg;
-        sprintf $msg, sourcename($self),
+        sprintf $msg, name($self),
             (defined $result ? $result->size : 'no') . ' triples';
     };
     return $result;
@@ -277,6 +282,14 @@ sources that may be code references or instances of RDF::Source:
 
     sourceref( $s1 )->( $env );
     sourceref( $s2 )->( $env );
+
+=method has_retrieved ( $source, $result [, $message ] )
+
+Creates a logging event at trace level to log that some result has been
+retrieved from a source. Returns the result. By default the logging messages is
+constructed from the source's name and the result's size. This function is
+automatically called at the end of method 'retrieve', so you do not have to
+call it, if your source only implements the method _retrieve_rdf.
 
 =head1 FUNCTIONS
 

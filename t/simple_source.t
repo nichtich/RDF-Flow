@@ -24,7 +24,6 @@ my $env = make_query('/hello');
 my $rdf = $source->retrieve($env);
 
 isa_ok( $rdf, 'RDF::Trine::Model', 'simple source returns RDF::Trine::Model' );
-# use RDF::Dumper; print rdfdump($rdf)."\n";
 
 $source = MySource->new;
 $rdf = $source->retrieve($env);
