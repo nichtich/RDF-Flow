@@ -4,10 +4,10 @@ use warnings;
 use Test::More;
 use Test::RDF;
 use RDF::Trine qw(statement iri);
-use RDF::Source qw(source source_uri);
-use RDF::Source::Union;
-use RDF::Source::Cascade;
-use RDF::Source::Pipeline;
+use RDF::Flow qw(rdflow rdflow_uri);
+use RDF::Flow::Union;
+use RDF::Flow::Cascade;
+use RDF::Flow::Pipeline;
 
 my ($src, $rdf, $env);
 
@@ -16,21 +16,21 @@ my ($src, $rdf, $env);
 #   -logger => Log::Contextual::SimpleLogger->new({ levels => [qw(trace info)]});
 
 sub foo { 
-    my $uri = source_uri(shift);
+    my $uri = rdflow_uri(shift);
     return model() unless $uri =~ /[a-z]$/;
     return model( $uri , 'x:a', 'y:foo');
 };
 sub bar { 
-    model( source_uri( shift ), 'x:a', 'y:bar'); 
+    model( rdflow_uri( shift ), 'x:a', 'y:bar'); 
 };
 
-my $foo = source \&foo, name => 'foo';
-my $bar = source \&bar, name => 'bar';
+my $foo = rdflow \&foo, name => 'foo';
+my $bar = rdflow \&bar, name => 'bar';
 
-my $empty = source sub { model(); };
-my $nil   = source sub { undef; };
+my $empty = rdflow sub { model(); };
+my $nil   = rdflow sub { undef; };
 
-$src = RDF::Source::Union->new( $empty, $foo, $foo, $nil, \&bar );
+$src = RDF::Flow::Union->new( $empty, $foo, $foo, $nil, \&bar );
 
 $rdf = $src->retrieve( query('/foo') );
 ok($rdf);
@@ -40,7 +40,7 @@ http://example.org/foo x:a y:foo
 http://example.org/foo x:a y:bar)), 'union' );
 
 
-$src = RDF::Source::Cascade->new( $empty, $foo, \&bar );
+$src = RDF::Flow::Cascade->new( $empty, $foo, \&bar );
 $rdf = $src->retrieve( query('/foo') );
 isomorph_graphs( $rdf, model(qw(http://example.org/foo x:a y:foo)), 'cascade' );
 
@@ -52,7 +52,7 @@ $env = query('/hi');
 $src = pipeline( $foo, $bar );
 $rdf = $src->retrieve( $env );
 isomorph_graphs( $rdf, model(qw(http://example.org/hi x:a y:bar)), 'pipeline' );
-is( $rdf, $env->{'rdfsource.data'}, 'pipeline sets rdflight.data' );
+is( $rdf, $env->{'rdflow.data'}, 'pipeline sets rdflight.data' );
 
 $src = pipeline( $foo, $bar, $empty );
 $rdf = $src->retrieve( query('/123') );

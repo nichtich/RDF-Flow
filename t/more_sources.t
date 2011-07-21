@@ -2,8 +2,8 @@ use strict;
 use warnings;
 
 use Test::More;
-use RDF::Source qw(dummy_source);
-use RDF::Source::Union;
+use RDF::Flow::Dummy;
+use RDF::Flow::Union;
 use RDF::Trine::Model;
 use RDF::Trine qw(iri statement);
 
@@ -11,13 +11,18 @@ my $example_model = RDF::Trine::Model->new;
 $example_model->add_statement(statement( 
     map { iri("http://example.com/$_") } qw(subject predicate object) ));
 
+#  use Log::Contextual::SimpleLogger;
+#  use Log::Contextual qw( :log ),
+#     -logger => Log::Contextual::SimpleLogger->new({ levels => [qw(trace)]});
+#use Carp;
+
 # '/subject', [ 'Accept' => 'text/turtle' ] ],
 #        content => qr{subject>.+predicate>.+object>},
 
 # '/adverb', [ 'Accept' => 'text/turtle' ] ],
 #  content => 'Not found',
 
-my $source = union( $example_model, \&dummy_source );
+my $source = union( $example_model, RDF::Flow::Dummy->new );
 
 # request => '/subject'
 # content => qr{subject>.+predicate>.+object>},
