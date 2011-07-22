@@ -61,3 +61,16 @@ sub _retrieve_rdf {
 
 __END__
 
+=head1 CONFIGURATION
+
+=over 4
+
+=item name
+
+Name of the source. Defaults to "anonymous LinkedData source".
+
+=item url
+
+Optional regular expression or code reference to match and/or map request URIs.
+
+=cut

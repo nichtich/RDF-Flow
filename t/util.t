@@ -3,6 +3,7 @@ use warnings;
 
 use Test::More;
 use RDF::Flow qw(:util);
+use Scalar::Util qw(blessed);
 
 # utility methods
 my $time = qr/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(Z|[+-]\d\d:\d\d)$/;
@@ -10,6 +11,7 @@ my $env = { HTTP_HOST => "example.com", SCRIPT_NAME => '/y', };
 
 my $uri = rdflow_uri( $env );
 is( $uri, 'http://example.com/y', 'rdflow_uri' );
+ok(! blessed $uri, 'plain string' );
 
 my $src1 = sub { };
 my $src2 = rdflow $src1;

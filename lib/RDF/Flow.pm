@@ -138,7 +138,7 @@ sub rdflow_uri {
 
     $base =~ s!/$!! if $path =~ m!^/!;
 
-    $env->{'rdflow.uri'} = URI->new( $base . $path )->canonical;
+    $env->{'rdflow.uri'} = URI->new( $base . $path )->canonical->as_string;
     
     $env->{'rdflow.uri'} =~ s/^https?:\/\/\/$//;
     $env->{'rdflow.uri'};

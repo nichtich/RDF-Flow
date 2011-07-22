@@ -8,7 +8,7 @@ use Log::Contextual qw(:log), -default_logger
     => Log::Contextual::WarnLogger->new({ env_prefix => __PACKAGE__ });
 
 use parent 'RDF::Flow';
-BEGIN { RDF::Flow->import(':util'); }
+#BEGIN { RDF::Flow->import(':util'); }
 
 use Scalar::Util qw(blessed);
 use Carp;
@@ -17,16 +17,18 @@ sub new {
     my $class  = shift;
     my $source = shift;
     my $cache  = shift;
+    my %args   = @_;
 
     # TODO: check $source and $cache
     croak "missing source" unless $source;
 
-    $source = rdflow $source;
+    $source = RDF::Flow::rdflow($source);
 
     my $self = bless {
         name   => "cached " . $source->name,
         source => $source,
         cache  => $cache,
+        form   => ($args{form} || 'hashref'),
     }, $class;
 
     $self;
@@ -41,13 +43,17 @@ sub _retrieve_rdf {
     # get from the cache
     my $object = $self->{cache}->get( $key );
     if (defined $object) {
-        log_trace { 'git from cache' };
+        log_trace { 'got from cache' };
         my ($rdf, $vars) = @{$object};
         while ( my ($key, $value) = each %$vars ) {
             $env->{$key} = $value;
         }
         $env->{'rdflow.cached'} = 1;
-        # TODO: logging!
+        if ($self->{'form'} eq 'hashref') {
+            my $model = RDF::Trine::Model->new;
+            $model->add_hashref($rdf);
+            $rdf = $model;
+        }
         return $rdf;
     }
 
@@ -58,7 +64,14 @@ sub _retrieve_rdf {
         grep { $_ =~ /^rdflow\./ } keys %$env
     };
     log_trace { 'store in cache' };
-    $self->{cache}->set( $key, [$rdf,$vars] );
+
+    $object = [$rdf,$vars];
+    if ($self->{'form'} eq 'hashref') {
+        $object->[0] = (blessed($rdf) and $rdf->isa('RDF::Trine::Model'))
+            ? $rdf->as_hashref : ( { } );
+    }
+
+    $self->{cache}->set( $key, $object );
 
     return $rdf;
 }
