@@ -39,7 +39,6 @@ isomorph_graphs( $rdf, model(qw(
 http://example.org/foo x:a y:foo 
 http://example.org/foo x:a y:bar)), 'union' );
 
-
 $src = RDF::Flow::Cascade->new( $empty, $foo, \&bar );
 $rdf = $src->retrieve( query('/foo') );
 isomorph_graphs( $rdf, model(qw(http://example.org/foo x:a y:foo)), 'cascade' );

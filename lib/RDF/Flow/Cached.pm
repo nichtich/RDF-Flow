@@ -76,6 +76,10 @@ sub _retrieve_rdf {
     return $rdf;
 }
 
+sub inputs {
+	return (shift->{source});
+}
+
 1;
 
 =head1 DESCRIPTION
@@ -100,7 +104,7 @@ cached response when it was first retrieved and stored in the cache.
 
   my $cached_source = $source->cached( $cache );       # alternative syntax
 
-  use RDF::FLow qw(cached);
+  use RDF::Flow qw(cached);
   my $cached_source = cached( $source, $cache );       # alternative syntax
 
 =head1 SEE ALSO

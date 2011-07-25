@@ -18,11 +18,11 @@ our @EXPORT = qw(cascade);
 
 sub new {
     my $class = shift;
-    my ($sources, $args) = sourcelist_args( @_ );
+    my ($inputs, $args) = sourcelist_args( @_ );
 
     bless {
-        sources => $sources,
-        name    => ($args->{name} || 'anonymous cascade'),
+        inputs => $inputs,
+        name   => ($args->{name} || 'anonymous cascade'),
     }, $class;
 }
 
@@ -32,7 +32,7 @@ sub cascade {
 
 sub about {
     my $self = shift;
-    $self->name($self) . ' with ' . $self->size . ' sources';
+    $self->name($self) . ' with ' . $self->size . ' inputs';
 }
 
 sub retrieve { # TODO: try/catch errors?
@@ -42,7 +42,7 @@ sub retrieve { # TODO: try/catch errors?
 
     my $i = 1;
     my $rdf;
-    foreach my $src ( @{$self->{sources}} ) {
+    foreach my $src ( $self->inputs ) {
         $rdf = $src->retrieve( $env );
 
         next unless defined $rdf;
@@ -59,6 +59,13 @@ sub retrieve { # TODO: try/catch errors?
 
     $self->timestamp( $env );
     $self->has_retrieved( $rdf, "%s returned $i. with %s" );
+}
+
+sub _graphviz_edgeattr {
+	my ($self,$n) = @_;
+	my %attr = (label => sprintf("%d.",$n));
+	$attr{style} = 'dotted' if $n > 1;
+	return %attr;
 }
 
 1;

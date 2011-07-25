@@ -15,11 +15,11 @@ our @EXPORT = qw(pipeline previous);
 
 sub new {
     my $class = shift;
-    my ($sources, $args) = sourcelist_args( @_ );
+    my ($inputs, $args) = sourcelist_args( @_ );
 
     bless {
-        sources => $sources,
-        name    => ($args->{name} || 'anonymous pipeline'),
+        inputs => $inputs,
+        name   => ($args->{name} || 'anonymous pipeline'),
     }, $class;
 }
 
@@ -30,7 +30,7 @@ sub pipeline {
 sub _retrieve_rdf {
     my ($self, $env) = @_;
 
-    foreach my $src ( @{$self->{sources}} ) {
+    foreach my $src ( $self->inputs ) {
         my $rdf = $src->retrieve( $env );
         $env->{'rdflow.data'} = $rdf;
         last unless RDF::Flow::has_content( $rdf );
@@ -41,6 +41,11 @@ sub _retrieve_rdf {
 
 sub previous { 
     $RDF::Flow::PREVIOUS; 
+}
+
+sub _graphviz_edgeattr {
+	my ($self,$n) = @_;
+	return (label => sprintf("%d.",$n));
 }
 
 1;

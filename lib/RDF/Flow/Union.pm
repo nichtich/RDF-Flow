@@ -17,11 +17,11 @@ our @EXPORT = qw(union);
 
 sub new {
     my $class = shift;
-    my ($sources, $args) = sourcelist_args( @_ );
+    my ($inputs, $args) = sourcelist_args( @_ );
 
     bless {
-        sources => $sources,
-        name    => ($args->{name} || 'anonymous union'),
+        inputs => $inputs,
+        name   => ($args->{name} || 'anonymous union'),
     }, $class;
 }
 
@@ -31,7 +31,7 @@ sub union {
 
 sub about {
     my $self = shift;
-    $self->name($self) . ' with ' . $self->size . ' sources';
+    $self->name($self) . ' with ' . $self->size . ' inputs';
 }
 
 sub _retrieve_rdf { # TODO: try/catch errors?
@@ -42,7 +42,7 @@ sub _retrieve_rdf { # TODO: try/catch errors?
         $result = $self->[0]->retrieve( $env );
     } elsif( $self->size > 1 ) {
         $result = RDF::Trine::Model->new;
-        foreach my $src ( @{$self->{sources}} ) { # TODO: parallel processing?
+        foreach my $src ( $self->inputs ) { # TODO: parallel processing?
             my $rdf = $src->retrieve( $env );
             next unless defined $rdf;
             $rdf = $rdf->as_stream unless $rdf->isa('RDF::Trine::Iterator');
@@ -58,13 +58,18 @@ sub _retrieve_rdf { # TODO: try/catch errors?
     return $result;
 }
 
+sub _graphviz_edgeattr {
+	my ($self,$n) = @_;
+	return ();
+}
+
 1;
 
 __END__
 
 =head1 DESCRIPTION
 
-This L<RDF::Flow> returns the union of responses of a set of sources.
+This L<RDF::Flow> returns the union of responses of a set of input sources.
 It exports the function 'union' as constructor shortcut.
 
 =head1 SYNOPSIS

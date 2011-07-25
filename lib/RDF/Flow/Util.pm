@@ -10,18 +10,18 @@ use parent 'Exporter';
 our @EXPORT = qw(sourcelist_args);
 
 sub sourcelist_args {
-    my ($sources, $args) = ([],{});
+    my ($inputs, $args) = ([],{});
     while ( @_ ) {
         my $s = shift @_;
         if ( ref $s ) {
-            push @$sources, map { RDF::Flow::rdflow($_) } $s;
+            push @$inputs, map { RDF::Flow::rdflow($_) } $s;
         } elsif ( defined $s ) {
             $args->{$s} = shift @_;
         } else {
             croak 'undefined parameter';
         }
     }
-    return ($sources, $args);
+    return ($inputs, $args);
 }
 
 1;
@@ -30,7 +30,7 @@ sub sourcelist_args {
 
 =head2 sourcelist_args ( @_ )
 
-Parses a list of sources (code or other references) mixed with key-value pairs
+Parses a list of inputs (code or other references) mixed with key-value pairs
 and returns both separated in an array and and hash.
 
 =cut

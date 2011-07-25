@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 package RDF::Flow;
-#ABSTRACT: RDF data flow aggregation
+#ABSTRACT: RDF data flow pipeline
 
 #TODO: use Log::Contextual 0.00305 (not at CPAN yet)
 use Log::Contextual::WarnLogger;
@@ -14,10 +14,12 @@ use RDF::Flow::Pipeline;
 use RDF::Flow::Cached;
 
 use RDF::Trine qw(iri);
-use Scalar::Util qw(blessed reftype);
+use Scalar::Util qw(blessed reftype refaddr);
 
 use URI;
 use URI::Escape;
+
+use GraphViz; # TODO: remove dependency
 
 use Try::Tiny;
 use parent 'Exporter';
@@ -72,11 +74,17 @@ sub name {
 
 *about = *name;
 
+sub inputs {
+    my $self = shift;
+    return $self->{inputs} ? @{ $self->{inputs} } : ();
+}
+
 sub size {
     my $self = shift;
-    return 1 unless $self->{sources};
-    return scalar @{ $self->{sources} };
+    return 1 unless $self->{inputs};
+    return scalar @{ $self->{inputs} };
 }
+
 
 sub retrieve {
     my ($self, $env) = @_;
@@ -168,6 +176,35 @@ sub has_retrieved {
     };
     return $result;
 }
+
+sub id {
+	return "source".refaddr(shift);
+}
+
+sub graphviz {
+	return scalar shift->graphviz_addnode( @_ );
+}
+
+sub graphviz_addnode {
+    my $self = shift;
+	my $g = ( blessed $_[0] and $_[0]->isa('GraphViz') )
+			? shift : GraphViz->new( @_ );
+	$g->add_node( $self->id, $self->_graphviz_nodeattr );
+
+    my $i=1;
+    foreach my $s ( $self->inputs ) {
+        $s->graphviz($g);
+        $g->add_edge( $s->id, $self->id, $self->_graphviz_edgeattr($i++) );
+	}
+
+	return $g;
+}
+
+sub _graphviz_nodeattr {
+    return (label => shift->name);
+}
+
+sub _graphviz_edgeattr { }
 
 use POSIX qw(strftime);
 
@@ -342,5 +379,8 @@ There are some CPAN modules for general data flow processing, such as L<Flow>
 and L<DataFlow>. As RDF::Flow is inspired by L<PSGI>, you should also have a
 look at the PSGI toolkit L<Plack>. RDF-related Perl modules are collected at
 L<http://www.perlrdf.org/>.
+
+The presentation "RDF Data Pipelines for Semantic Data Federation", includes
+more RDF Pipelining research references: L<http://dbooth.org/2011/pipeline/>.
 
 =cut
