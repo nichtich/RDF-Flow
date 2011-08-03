@@ -5,6 +5,7 @@ use Test::More;
 use Test::RDF;
 use RDF::Trine qw(statement iri);
 use RDF::Flow qw(rdflow_uri);
+use RDF::Flow::Source;
 
 sub simple_source { 
     my $env = shift;
@@ -18,7 +19,7 @@ sub simple_source {
     return $model;
 };
 
-my $source = RDF::Flow->new( \&simple_source );
+my $source = RDF::Flow::Source->new( \&simple_source );
 
 my $env = make_query('/hello'); 
 my $rdf = $source->retrieve($env);
@@ -26,7 +27,6 @@ my $rdf = $source->retrieve($env);
 isa_ok( $rdf, 'RDF::Trine::Model', 'simple source returns RDF::Trine::Model' );
 
 done_testing;
-
 
 sub make_query { 
     return { HTTP_HOST => 'example.org', PATH_INFO => shift };

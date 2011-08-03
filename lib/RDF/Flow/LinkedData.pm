@@ -7,7 +7,8 @@ use Log::Contextual::WarnLogger;
 use Log::Contextual qw(:log), -default_logger
     => Log::Contextual::WarnLogger->new({ env_prefix => __PACKAGE__ });
 
-use parent 'RDF::Flow';
+use parent 'RDF::Flow::Source';
+use RDF::Flow::Util;
 
 use Try::Tiny;
 use RDF::Trine::Model;
@@ -34,7 +35,7 @@ sub new {
 
 sub _retrieve_rdf {
     my ($self, $env) = @_;
-    my $uri = RDF::Flow::rdflow_uri( $env );
+    my $uri = rdflow_uri( $env );
     my $url = $uri;
 
     if ( $self->{url} ) {

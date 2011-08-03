@@ -1,25 +1,31 @@
 use strict;
 use Test::More;
 
-use GraphViz;
 use RDF::Flow qw(:util pipeline union cascade);
 use RDF::Flow::Cached;
 
-{package Cache; sub get {} sub set {} sub new {}}
+eval "use GraphViz";
+my $skip = $@;
 
-my $sa = rdflow( sub { }, name => "Foo" );
-my $sb = rdflow( sub { }, name => "Bar" );
-my $s1 = cascade( $sa, $sb );
-my $s2 = rdflow( sub { }, name => "S2" );
-my $s3 = union( rdflow( sub { }, name => "S3" ), rdflow ( sub{}, name => "S4") );
+SKIP: {
+    skip('GraphViz required to run tests',1) if $skip;
 
-my $c1 = RDF::Flow::Cached->new( $s1, Cache->new );
-my $s = pipeline ( $c1, $s2, $s3 );
-my $g = $s->graphviz;
+    {package Cache; sub get {} sub set {} sub new {}}
 
-$g->as_png('flow.png');
-# TODO: check image
+    my $sa = rdflow( sub { }, name => "Foo" );
+    my $sb = rdflow( sub { }, name => "Bar" );
+    my $s1 = cascade( $sa, $sb );
+    my $s2 = rdflow( sub { }, name => "S2" );
+    my $s3 = union( rdflow( sub { }, name => "S3" ), rdflow ( sub{}, name => "S4") );
 
-ok(1),
+    my $c1 = RDF::Flow::Cached->new( $s1, Cache->new );
+    my $s = pipeline ( $c1, $s2, $s3 );
+    my $g = $s->graphviz;
+
+    $g->as_png('flow.png');
+    # TODO: check image
+
+    ok(1);
+}
 
 done_testing;

@@ -22,7 +22,7 @@ $example_model->add_statement(statement(
 # '/adverb', [ 'Accept' => 'text/turtle' ] ],
 #  content => 'Not found',
 
-my $source = union( $example_model, RDF::Flow::Dummy->new );
+my $source = RDF::Flow::Union->new( $example_model, RDF::Flow::Dummy->new );
 
 # request => '/subject'
 # content => qr{subject>.+predicate>.+object>},

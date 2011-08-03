@@ -4,7 +4,7 @@ use warnings;
 use Test::More;
 use Test::RDF;
 use RDF::Trine qw(statement iri);
-use RDF::Flow qw(rdflow rdflow_uri);
+use RDF::Flow qw(rdflow rdflow_uri previous cascade union pipeline);
 use RDF::Flow::Union;
 use RDF::Flow::Cascade;
 use RDF::Flow::Pipeline;

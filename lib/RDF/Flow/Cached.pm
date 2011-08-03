@@ -7,8 +7,7 @@ use Log::Contextual::WarnLogger;
 use Log::Contextual qw(:log), -default_logger
     => Log::Contextual::WarnLogger->new({ env_prefix => __PACKAGE__ });
 
-use parent 'RDF::Flow';
-#BEGIN { RDF::Flow->import(':util'); }
+use parent 'RDF::Flow::Source';
 
 use Scalar::Util qw(blessed);
 use Carp;

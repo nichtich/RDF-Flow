@@ -7,7 +7,7 @@ use Log::Contextual::WarnLogger;
 use Log::Contextual qw(:log), -default_logger
     => Log::Contextual::WarnLogger->new({ env_prefix => __PACKAGE__ });
 
-use parent 'RDF::Flow';
+use parent 'RDF::Flow::Source';
 
 use RDF::Flow::Util;
 use Carp 'croak';

@@ -7,7 +7,7 @@ use Log::Contextual::WarnLogger;
 use Log::Contextual qw(:log), -default_logger
     => Log::Contextual::WarnLogger->new({ env_prefix => __PACKAGE__ });
 
-use parent 'RDF::Flow';
+use parent 'RDF::Flow::Source';
 use RDF::Flow::Util;
 use Carp 'croak';
 our @CARP_NOT = qw(RDF::Flow::Util);
@@ -33,7 +33,7 @@ sub _retrieve_rdf {
     foreach my $src ( $self->inputs ) {
         my $rdf = $src->retrieve( $env );
         $env->{'rdflow.data'} = $rdf;
-        last unless RDF::Flow::has_content( $rdf );
+        last unless is_rdf_data( $rdf );
     }
 
     $env->{'rdflow.data'};

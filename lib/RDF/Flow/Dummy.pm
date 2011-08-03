@@ -1,12 +1,11 @@
 use strict;
 use warnings;
 package RDF::Flow::Dummy;
-#ABSTRACT: Dummy source always returns one trivial triple
+#ABSTRACT: Dummy source that always returns one trivial triple
 
 use RDF::Trine qw(statement iri);
-
-use parent qw(RDF::Flow);
-BEGIN { RDF::Flow->import(':util'); } # exports rdflow_uri etc.
+use RDF::Flow::Util;
+use parent 'RDF::Flow::Source';
 
 our $rdf_type      = iri('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
 our $rdfs_Resource = iri('http://www.w3.org/2000/01/rdf-schema#Resource');
@@ -27,7 +26,7 @@ sub _retrieve_rdf {
 
 =head2 DESCRIPTION
 
-This source returns a single triple such as 
+This L<RDF::Flow::Source> always returns a single triple such as 
 
     <http://example.org/> rdf:type rdfs:Resource .
 

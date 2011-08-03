@@ -11,9 +11,9 @@ use RDF::Flow::Util;
 use Carp;
 our @CARP_NOT = qw(RDF::Flow::Util);
 
-use parent 'RDF::Flow';
+use parent 'RDF::Flow::Source';
 
-our @EXPORT = qw(union);
+our @EXPORT = qw(union); # TODO: remove
 
 sub new {
     my $class = shift;
@@ -46,12 +46,7 @@ sub _retrieve_rdf { # TODO: try/catch errors?
             my $rdf = $src->retrieve( $env );
             next unless defined $rdf;
             $rdf = $rdf->as_stream unless $rdf->isa('RDF::Trine::Iterator');
-
-            $result->begin_bulk_ops;
-            while (my $st = $rdf->next) {
-                $result->add_statement( $st );
-            }
-            $result->end_bulk_ops;
+            iterator_to_model( $rdf, $result );            
         }
     }
 
