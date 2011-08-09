@@ -13,8 +13,6 @@ our @CARP_NOT = qw(RDF::Flow::Util);
 
 use parent 'RDF::Flow::Source';
 
-our @EXPORT = qw(union); # TODO: remove
-
 sub new {
     my $class = shift;
     my ($inputs, $args) = sourcelist_args( @_ );
@@ -25,16 +23,12 @@ sub new {
     }, $class;
 }
 
-sub union { 
-    RDF::Flow::Union->new(@_) 
-}
-
 sub about {
     my $self = shift;
     $self->name($self) . ' with ' . $self->size . ' inputs';
 }
 
-sub _retrieve_rdf { # TODO: try/catch errors?
+sub retrieve_rdf { # TODO: try/catch errors?
     my ($self, $env) = @_;
     my $result;
 
@@ -46,40 +40,34 @@ sub _retrieve_rdf { # TODO: try/catch errors?
             my $rdf = $src->retrieve( $env );
             next unless defined $rdf;
             $rdf = $rdf->as_stream unless $rdf->isa('RDF::Trine::Iterator');
-            iterator_to_model( $rdf, $result );            
+            iterator_to_model( $rdf, $result );
         }
     }
 
     return $result;
 }
 
+# experimental
 sub _graphviz_edgeattr {
-	my ($self,$n) = @_;
-	return ();
+    my ($self,$n) = @_;
+    return ();
 }
 
 1;
 
-__END__
-
 =head1 DESCRIPTION
 
 This L<RDF::Flow> returns the union of responses of a set of input sources.
-It exports the function 'union' as constructor shortcut.
 
 =head1 SYNOPSIS
 
+    use RDF::Flow qw(union);
+    $src = union( @sources );                 # shortcut
+
     use RDF::Flow::Union;
-
-    $src = union(@sources);                     # shortcut
     $src = RDF::Flow::Union->new( @sources ); # explicit
+
     $rdf = $src->retrieve( $env );
-
-=head1 EXPORTED FUNCTIONS
-
-=head2 union
-
-Shortcut for RDF::Flow::Union->new.
 
 =head2 SEE ALSO
 

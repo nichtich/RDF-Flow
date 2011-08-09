@@ -10,7 +10,7 @@ use parent 'RDF::Flow::Source';
 our $rdf_type      = iri('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
 our $rdfs_Resource = iri('http://www.w3.org/2000/01/rdf-schema#Resource');
 
-sub _retrieve_rdf {
+sub retrieve_rdf {
     my ($self, $env) = @_;
     my $uri = rdflow_uri( $env );
 
@@ -26,7 +26,7 @@ sub _retrieve_rdf {
 
 =head2 DESCRIPTION
 
-This L<RDF::Flow::Source> always returns a single triple such as 
+This L<RDF::Flow::Source> always returns a single triple such as
 
     <http://example.org/> rdf:type rdfs:Resource .
 

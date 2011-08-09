@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 package RDF::Flow::Source;
-#ABSTRACT: Source of RDF data 
+#ABSTRACT: Source of RDF data
 
 use Log::Contextual::WarnLogger;
 use Log::Contextual qw(:log), -default_logger
@@ -12,6 +12,8 @@ use Scalar::Util qw(blessed refaddr);
 use Try::Tiny;
 use Carp;
 
+use RDF::Trine::Model;
+use RDF::Trine::Parser;
 use RDF::Flow::Util;
 use RDF::Flow::Pipeline;
 
@@ -19,24 +21,35 @@ sub new {
     my $class = shift;
     my ($src, %args) = ref($_[0]) ?  @_ : (undef,@_);
 
+    $src = delete $args{from} unless defined $src;
+
     my $code;
 
-    # TODO: Load from file
-    
+    if ( $src and not ref $src ) { # load from file
+        my $model = RDF::Trine::Model->new;
+        eval { RDF::Trine::Parser->parse_file_into_model( "file:///$src", $src, $model ); };
+        if ( @_ ) {
+            log_info { "failed to loaded from $src"; }
+        } else {
+            log_info { "loaded from $src"; }
+        }
+        $src = $model;
+    }
+
     if (blessed $src and $src->isa('RDF::Flow::Source')) {
         return $src; # don't wrap
         # TODO: use args to modify object!
     } elsif ( blessed $src and $src->isa('RDF::Trine::Model') ) {
         $code = sub {
             my $uri = rdflow_uri( shift );
-            iterator_to_model( $src->bounded_description( 
-                iri( $uri ) 
+            iterator_to_model( $src->bounded_description(
+                iri( $uri )
             ) );
         };
     } elsif ( ref $src and ref $src eq 'CODE' ) {
         $code = $src;
     } elsif (not defined $src) {
-        carp 'Missing RDF source in plain RDF::Flow::Source' 
+        carp 'Missing RDF source in plain RDF::Flow::Source'
             if $class eq 'RDF::Flow::Source';
         $code = sub { };
     } else {
@@ -53,16 +66,16 @@ sub new {
 sub retrieve {
     my ($self, $env) = @_;
     $env = { 'rdflow.uri' => $env } if ($env and not ref $env);
-    log_trace { 
+    log_trace {
         sprintf "retrieve from %s with %s", about($self), rdflow_uri($env);
     };
     $self->timestamp( $env );
-    $self->has_retrieved( $self->_retrieve_rdf( $env ) );
+    $self->has_retrieved( $self->retrieve_rdf( $env ) );
 }
 
-sub _retrieve_rdf {
+sub retrieve_rdf {
     my ($self, $env) = @_;
-    return try { 
+    return try {
         $self->{code}->( $env );
     } catch {
         s/[.]?\s+$//s;
@@ -92,7 +105,7 @@ sub has_retrieved {
         $msg = "%s returned %s" unless $msg;
         my $size = 'no';
         if ( $result ) {
-            $size = (blessed $result and $result->can('size')) 
+            $size = (blessed $result and $result->can('size'))
                 ? $result->size : 'some';
         };
         sprintf $msg, name($self), "$size triples";
@@ -101,29 +114,29 @@ sub has_retrieved {
 }
 
 sub id {
-	return "source".refaddr(shift);
+    return "source".refaddr(shift);
 }
 
 
 sub graphviz {
-	return scalar shift->graphviz_addnode( @_ );
+    return scalar shift->graphviz_addnode( @_ );
 }
 
 sub graphviz_addnode {
     my $self = shift;
-	my $g = ( blessed $_[0] and $_[0]->isa('GraphViz') )
-			? shift : eval { GraphViz->new( @_ ) };
+    my $g = ( blessed $_[0] and $_[0]->isa('GraphViz') )
+            ? shift : eval { GraphViz->new( @_ ) };
     return unless $g;
 
-	$g->add_node( $self->id, $self->_graphviz_nodeattr );
+    $g->add_node( $self->id, $self->_graphviz_nodeattr );
 
     my $i=1;
     foreach my $s ( $self->inputs ) {
         $s->graphviz($g);
         $g->add_edge( $s->id, $self->id, $self->_graphviz_edgeattr($i++) );
-	}
+    }
 
-	return $g;
+    return $g;
 }
 
 sub _graphviz_nodeattr {
@@ -169,6 +182,23 @@ sub size {
 
 1;
 
+=head1 SYNOPSIS
+
+    $src = rdflow( \&mysource, name => "code reference as source" );
+    $src = rdflow( $model, name => "RDF::Trine::Model as source" );
+
+    package MySource;
+    use parent 'RDF::Flow::Source';
+
+    sub retrieve_rdf {
+        my ($self, $env) = @_;
+        my $uri = $env->{'rdflow.uri'};
+
+        # ... your logic here ...
+
+        return $model;
+    }
+
 =method new ( $source {, name => $name } )
 
 Create a new RDF source by wrapping a code reference or a L<RDF::Trine::Model>.
@@ -180,7 +210,7 @@ similar to PSGI applications, which return HTTP responses instead of
 RDF data. RDF::Light supports three types of sources: code references,
 instances of RDF::Flow, and instances of RDF::Trine::Model.
 
-This constructor can is exported as function C<rdflow> by L<RDF::Flow>:
+This constructor is exported as function C<rdflow> by L<RDF::Flow>:
 
   use RDF::Flow qw(rdflow);
 
@@ -193,7 +223,7 @@ Creates a logging event at trace level to log that some result has been
 retrieved from a source. Returns the result. By default the logging messages is
 constructed from the source's name and the result's size. This function is
 automatically called at the end of method 'retrieve', so you do not have to
-call it, if your source only implements the method _retrieve_rdf.
+call it, if your source only implements the method C<retrieve_rdf>.
 
 =method name
 
@@ -203,17 +233,29 @@ call it, if your source only implements the method _retrieve_rdf.
 
 =method inputs
 
-=method graphviz
+=method timestamp
+
+=method source_error
 
 =method id
 
-=method retrive
+=method retrieve
 
-=method _retrieve_rdf
+=method retrieve_rdf
+
+=method pipe_to
 
 =method cached ( $cache )
 
 Plugs a cache in front of a source. This method can also be exported as function.
 Actually, it is a shortcut for L<RDF::Flow::Cached>-E<gt>new.
 
+=method graphviz
 
+Experimental.
+
+=method graphviz_addnode
+
+Experimental.
+
+=cut

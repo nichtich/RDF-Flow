@@ -2,13 +2,18 @@ use strict;
 use warnings;
 
 use Test::More;
+use RDF::Flow;
 use RDF::Flow::Dummy;
 use RDF::Flow::Union;
 use RDF::Trine::Model;
 use RDF::Trine qw(iri statement);
 
+my $f = rdflow( from => 't/example.ttl' );
+my $rdf = $f->retrieve('http://example.org/foo');
+is ( $rdf->size, 1, 'from file' );
+
 my $example_model = RDF::Trine::Model->new;
-$example_model->add_statement(statement( 
+$example_model->add_statement(statement(
     map { iri("http://example.com/$_") } qw(subject predicate object) ));
 
 #  use Log::Contextual::SimpleLogger;

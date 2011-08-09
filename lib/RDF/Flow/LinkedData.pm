@@ -33,7 +33,7 @@ sub new {
     }, $class;
 }
 
-sub _retrieve_rdf {
+sub retrieve_rdf {
     my ($self, $env) = @_;
     my $uri = rdflow_uri( $env );
     my $url = $uri;
@@ -45,14 +45,14 @@ sub _retrieve_rdf {
             return;
         }
     }
-    
+
     my $model = RDF::Trine::Model->new;
 
     try {
         RDF::Trine::Parser->parse_url_into_model( $url, $model );
         log_debug { "retrieved data from $url" };
     } catch {
-        $self->source_error("failed to retrieve RDF from $url: $_", $env); 
+        $self->source_error("failed to retrieve RDF from $url: $_", $env);
     };
 
     return $model;
@@ -60,7 +60,9 @@ sub _retrieve_rdf {
 
 1;
 
-__END__
+=head1 DESCRIPTION
+
+This L<RDF::Flow::Source> fetches RDF data via HTTP.
 
 =head1 CONFIGURATION
 
@@ -73,5 +75,7 @@ Name of the source. Defaults to "anonymous LinkedData source".
 =item url
 
 Optional regular expression or code reference to match and/or map request URIs.
+
+=back
 
 =cut

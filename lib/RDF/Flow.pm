@@ -13,7 +13,7 @@ use parent 'Exporter';
 
 our @EXPORT = qw(rdflow);
 our @EXPORT_OK = qw(
-    rdflow rdflow_uri 
+    rdflow rdflow_uri
     cached union cascade pipeline previous
     has_retrieved
 );
@@ -33,30 +33,22 @@ sub rdflow_uri { RDF::Flow::Source::rdflow_uri( @_ ); }
 
 1;
 
-__END__
-
-=head1 DESCRIPTION
-
-RDF::Flow provides a simple framework on top of L<RDF::Trine> to
-define and connect RDF sources in data flow pipes.
-
 =head1 SYNOPSIS
 
-    # define sources
+    # define RDF sources (see RDF::Flow::Source)
     $src = rdflow( \&mysub, name => "code reference as source" );
-    $src = rdflow( $model, name => "RDF::Trine::Model as source" );
+    $src = rdflow( $model,  name => "RDF::Trine::Model as source" );
 
     # using a RDF::Trine::Model as source is equivalent to:
-    $src = rdflow( sub {
+    $src = RDF::Flow->new( sub {
         my $env = shift;
         my $uri = RDF::Flow::uri( $env );
         return $model->bounded_description( RDF::Trine::iri( $uri ) );
-    });
-
+    } );
 
     # retrieve RDF data
-    $rdf = $src->retrieve( $uri ); 
-    $rdf = $src->retrieve( $env ); # with $env->{'rdflow.uri'}
+    $rdf = $src->retrieve( $uri );
+    $rdf = $src->retrieve( $env ); # uri constructed from $env
 
     # code reference as source (more detailed example)
     $src = rdflow( sub {
@@ -66,21 +58,23 @@ define and connect RDF sources in data flow pipes.
         return $model;
     });
 
+=head1 DESCRIPTION
 
-    # It is recommended to define your source as package
-    package MySource;
-    use parent 'RDF::Flow';
-
-    sub retrieve {
-        my ($self, $env) = shift;
-        # ..your logic here...
-    }
+RDF::Flow provides a simple framework on top of L<RDF::Trine> to define and
+connect RDF sources in data flow pipes. The base class to define RDF sources is
+L<RDF::Flow::Source>. Predefined sources exist to access RDF as LinkedData
+(L<RDF::Flow::LinkedData>), to cache requests (L<RDF::Flow::Cache>), to combine
+sources (L<RDF::Flow::Union>, L<RDF::Flow::Pipeline>, L<RDF::Flow::Cascade>),
+and for testing (L<RDF::Flow::Dummy>).
 
 =head1 FUNCTIONS
 
+This module exports some functions on request or by default.
+
 =head2 rdflow
 
-Shortcut to create a new source with L<RDF::FLow::Source>.
+Shortcut to create a new source with L<RDF::Flow::Source>. This is the only
+function exported by default.
 
 =head2 rdflow_uri ( $env | $uri )
 
@@ -123,7 +117,7 @@ Portion of the request URI that follows the ?, if any.
 
 =item rdflow.ignorepath
 
-If this variable is set, no query part is used when constructing an URI. 
+If this variable is set, no query part is used when constructing an URI.
 
 =back
 
@@ -134,16 +128,36 @@ variable C<rdflow.uri>, so it is always guaranteed to be set after calling.
 However it may be the empty string, if an environment without HTTP_HOST or
 SERVER_NAME was provided.
 
+=head2 cached
+
+Shortcut for L<RDF::Flow::Cached>-E<gt>new.
+
+=head2 cascade
+
+Shortcut for L<RDF::Flow::Cascade>-E<gt>new.
+
+=head2 pipeline
+
+Shortcut for L<RDF::Flow::Pipeline>-E<gt>new.
+
+=head2 previous
+
+A source that always returns C<rdflow.data> without modification.
+
+=head2 union
+
+Shortcut for L<RDF::Flow::Union>-E<gt>new.
+
 =head2 LOGGING
 
 RDF::Flow uses L<Log::Contextual> for logging. By default no logging messages
 are created, unless you enable a logger.
 
-To simply see what's going on:
+To simply see what's going on, enable:
 
-  use Log::Contextual::SimpleLogger;
-  use Log::Contextual qw( :log ),
-     -logger => Log::Contextual::SimpleLogger->new({ levels => [qw(trace)]});
+    use Log::Contextual::SimpleLogger;
+    use Log::Contextual qw( :log ),
+       -logger => Log::Contextual::SimpleLogger->new({ levels => [qw(trace)]});
 
 =head2 LIMITATIONS
 
@@ -159,6 +173,7 @@ look at the PSGI toolkit L<Plack>. RDF-related Perl modules are collected at
 L<http://www.perlrdf.org/>.
 
 The presentation "RDF Data Pipelines for Semantic Data Federation", includes
-more RDF Pipelining research references: L<http://dbooth.org/2011/pipeline/>.
+more RDF Pipelining research references: L<http://dbooth.org/2011/pipeline/>
+(not directly related to this module).
 
 =cut

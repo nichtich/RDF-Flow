@@ -1,7 +1,10 @@
 # Change file for RDF::Flow
 
-0.169 2011-08-03
-    More refactoring (RDF::Flow::Source)
+0.171 2011-08-09
+    Read from file
+
+0.170 2011-08-04
+    Refactoring and cleanup (RDF::Flow::Source, retrieve_rdf, etc.)
 
 0.16 2011-07-21
     Renamed to RDF::Flow

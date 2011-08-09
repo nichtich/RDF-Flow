@@ -33,7 +33,7 @@ sub new {
     $self;
 }
 
-sub _retrieve_rdf {
+sub retrieve_rdf {
     my $self = shift;
     my $env  = shift;
 
@@ -76,22 +76,22 @@ sub _retrieve_rdf {
 }
 
 sub inputs {
-	return (shift->{source});
+    return (shift->{source});
 }
 
 1;
 
 =head1 DESCRIPTION
 
-Plugs a cache in front of a L<RDF::Flow> source. Actually, this module does not
-implement a cache. Instead you must provide an object that provides at least
-two methods to get and set an object based on a key. See L<CHI>, L<Cache>, and
-L<Cache::Cache> for existing cache modules.
+Plugs a cache in front of a L<RDF::Flow::Source>. Actually, this module does
+not implement a cache. Instead you must provide an object that provides at
+least two methods to get and set an object based on a key. See L<CHI>,
+L<Cache>, and L<Cache::Cache> for existing cache modules.
 
 The request URI in C<rdflow.uri> is used as caching key. C<rdflow.cached> is
 set if the response has been retrieved from the cache.  C<rdflow.timestamp>
 reflects the timestamp of the original source, so you get the timestamp of the
-cached response when it was first retrieved and stored in the cache. 
+cached response when it was first retrieved and stored in the cache.
 
 =head1 SYNOPSIS
 

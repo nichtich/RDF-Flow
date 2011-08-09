@@ -14,8 +14,6 @@ use Carp 'croak';
 our @CARP_NOT = qw(RDF::Flow::Util);
 use Scalar::Util 'blessed';
 
-our @EXPORT = qw(cascade);
-
 sub new {
     my $class = shift;
     my ($inputs, $args) = sourcelist_args( @_ );
@@ -24,10 +22,6 @@ sub new {
         inputs => $inputs,
         name   => ($args->{name} || 'anonymous cascade'),
     }, $class;
-}
-
-sub cascade {
-    RDF::Flow::Cascade->new(@_)
 }
 
 sub about {
@@ -72,24 +66,19 @@ sub _graphviz_edgeattr {
 
 =head1 DESCRIPTION
 
-This L<RDF::Flow> returns the first non-empty response of a given sequence of
-sources.
+This L<RDF::Flow::Source> returns the first non-empty response of a given
+sequence of sources.
 
 =head1 SYNOPSIS
 
-    use RDF::Flow::Cascade;
+    use RDF::Flow qw(cascade);
+    $src = cascade( @sources );                  # shortcut
+    $src = cascade( @sources, name => 'foo' );   # with name
 
-    $src = cascade( @sources );                    # shortcut
+    use RDF::Flow::Cascade;
     $src = RDF::Flow::Cascade->new( @sources );  # explicit
-    $src = cascade( @sources, name => 'foo' );     # with name
 
     $rdf = $src->retrieve( $env );
-
-=head1 EXPORTED FUNCTIONS
-
-=head2 cascade
-
-Shortcut for RDF::Flow::Cascade->new.
 
 =head2 SEE ALSO
 

@@ -70,7 +70,7 @@ sub rdflow_uri {
     $base =~ s!/$!! if $path =~ m!^/!;
 
     $env->{'rdflow.uri'} = URI->new( $base . $path )->canonical->as_string;
-    
+
     $env->{'rdflow.uri'} =~ s/^https?:\/\/\/$//;
     $env->{'rdflow.uri'};
 }
@@ -100,7 +100,7 @@ and returns both separated in an array and and hash.
 
 =head2 iterator_to_model ( $iterator [, $model ] )
 
-Adds all statements from a L<RDF::Trine::Iterator> to a (possibly new) 
+Adds all statements from a L<RDF::Trine::Iterator> to a (possibly new)
 L<RDF::Trine::Model> model and returns the model.
 
 =head2 is_rdf_data ( $rdf )
