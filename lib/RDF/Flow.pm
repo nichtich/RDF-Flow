@@ -4,13 +4,13 @@ package RDF::Flow;
 #ABSTRACT: RDF data flow pipeline
 
 use RDF::Flow::Source;
+use RDF::Flow::Util qw();
 use RDF::Flow::Union;
 use RDF::Flow::Cascade;
 use RDF::Flow::Pipeline;
 use RDF::Flow::Cached;
 
-use parent 'Exporter';
-
+use base 'Exporter';
 our @EXPORT = qw(rdflow);
 our @EXPORT_OK = qw(
     rdflow rdflow_uri
@@ -29,7 +29,7 @@ sub cached   { RDF::Flow::Cached->new( @_ ); }
 
 sub previous { $RDF::Flow::PREVIOUS; }
 
-sub rdflow_uri { RDF::Flow::Source::rdflow_uri( @_ ); }
+sub rdflow_uri { RDF::Flow::Util::rdflow_uri( @_ ); }
 
 1;
 
