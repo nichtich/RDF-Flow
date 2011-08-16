@@ -36,6 +36,7 @@ sub rdflow_uri { RDF::Flow::Util::rdflow_uri( @_ ); }
 =head1 SYNOPSIS
 
     # define RDF sources (see RDF::Flow::Source)
+    $src = rdflow( "mydata.ttl", name => "RDF file as source" );
     $src = rdflow( \&mysub, name => "code reference as source" );
     $src = rdflow( $model,  name => "RDF::Trine::Model as source" );
 

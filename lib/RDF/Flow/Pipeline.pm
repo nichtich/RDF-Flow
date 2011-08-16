@@ -16,10 +16,14 @@ sub new {
     my $class = shift;
     my ($inputs, $args) = sourcelist_args( @_ );
 
-    bless {
+    my $self = bless {
         inputs => $inputs,
         name   => ($args->{name} || 'anonymous pipeline'),
     }, $class;
+    
+    $self->match( $args->{match} );
+
+    return $self;
 }
 
 sub retrieve_rdf {

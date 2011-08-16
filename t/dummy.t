@@ -30,4 +30,21 @@ $env = { HTTP_HOST => "example.org", SCRIPT_NAME => '/x', };
 $rdf = $dummy->retrieve( $env );
 is( $ser->serialize_model_to_string($rdf), $ttl1, 'retriev from env (URI build)' );
 
+
+$dummy = RDF::Flow::Dummy->new( name => 'foo' , match => qr/^[a-z]:/ );
+$rdf = $dummy->retrieve( $env );
+is( $rdf->size, 0, 'URI did not match' );
+$env = { 'rdflow.uri' => 'a:foo' };
+$rdf = $dummy->retrieve( $env );
+is( $rdf->size, 1, 'URI matched' );
+
+$dummy = RDF::Flow::Dummy->new( name => 'foo' , match => sub { $_[0] =~ s/example\.org/example.com/ } );
+$env = { 'rdflow.uri' => 'http://example.org/foo' };
+$rdf = $dummy->retrieve( $env );
+is( $rdf->size, 1, 'URI matched' );
+is( $env->{'rdflow.uri'}, 'http://example.com/foo', 'mapped URI' );
+
+$rdf = $dummy->retrieve( $env );
+is( $rdf->size, 0, 'URI did not map' );
+
 done_testing;

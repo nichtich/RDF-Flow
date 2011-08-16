@@ -1,5 +1,8 @@
 # Change file for RDF::Flow
 
+0.173 2011-08-16
+    New source option 'match' instead of 'url'
+
 0.172 2011-08-11
     Support reading from file and minor fixes
 

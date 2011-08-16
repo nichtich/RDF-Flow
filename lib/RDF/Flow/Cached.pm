@@ -16,7 +16,7 @@ sub new {
     my $class  = shift;
     my $source = shift;
     my $cache  = shift;
-    my %args   = @_;
+    my (%args) = @_;
 
     # TODO: check $source and $cache
     croak "missing source" unless $source;
@@ -29,6 +29,8 @@ sub new {
         cache  => $cache,
         form   => ($args{form} || 'hashref'),
     }, $class;
+
+    $self->match( $args{match} );
 
     $self;
 }

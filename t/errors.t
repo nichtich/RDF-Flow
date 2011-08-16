@@ -19,8 +19,8 @@ is( $rdf->size, 0, 'source died' );
 like( $env->{'rdflow.error'}, qr{^boom! at .+ line \d+$}, 'but nothing broken' );
 
 $source = RDF::Flow::LinkedData->new;
-$env = { 'rdflow.uri' => 'not:url' };
+$env = { 'rdflow.uri' => 'xxx' };
 $rdf = $source->retrieve( $env );
-like( $env->{'rdflow.error'}, qr{^failed to retrieve RDF from not:url: 501}, 'linked data error' );
+like( $env->{'rdflow.error'}, qr{^failed to retrieve RDF from xxx: not an URL}, 'linked data error' );
 
 done_testing

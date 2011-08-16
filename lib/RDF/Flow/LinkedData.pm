@@ -16,39 +16,18 @@ use RDF::Trine::Parser;
 use Scalar::Util qw(reftype);
 use Carp;
 
-sub new {
-    my ($class, %args) = @_;
-
-    my $url = $args{url} || undef;
-    if ( $url ) {
-        $url = sub { shift =~ $url }
-            if reftype $url eq 'REGEXP';
-        croak 'url parameter must be code or regexp'
-            if reftype $url ne 'CODE';
-    }
-
-    bless {
-        url  => $url,
-        name => ($args{name} || 'anonymous LinkedData source'),
-    }, $class;
+sub name {
+    shift->{name} || 'anonymous LinkedData source';
 }
 
 sub retrieve_rdf {
     my ($self, $env) = @_;
-    my $uri = rdflow_uri( $env );
-    my $url = $uri;
-
-    if ( $self->{url} ) {
-        $url = $self->{url}->( $uri );
-        if ( not $url ) {
-            log_trace { "URI did not match: $uri" };
-            return;
-        }
-    }
+    my $url = rdflow_uri( $env );
 
     my $model = RDF::Trine::Model->new;
 
     try {
+        die 'not an URL' unless $url =~ /^http[s]?:\/\//;
         RDF::Trine::Parser->parse_url_into_model( $url, $model );
         log_debug { "retrieved data from $url" };
     } catch {
@@ -62,9 +41,13 @@ sub retrieve_rdf {
 
 =head1 DESCRIPTION
 
-This L<RDF::Flow::Source> fetches RDF data via HTTP.
+This L<RDF::Flow::Source> fetches RDF data via HTTP. The request URI is used 
+as URL to get data from.
 
 =head1 CONFIGURATION
+
+This source supports the default configuration options. The following options
+are useful in particular:
 
 =over 4
 
@@ -72,7 +55,7 @@ This L<RDF::Flow::Source> fetches RDF data via HTTP.
 
 Name of the source. Defaults to "anonymous LinkedData source".
 
-=item url
+=item match
 
 Optional regular expression or code reference to match and/or map request URIs.
 

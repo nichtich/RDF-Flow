@@ -7,8 +7,11 @@ use Log::Contextual::WarnLogger;
 use Log::Contextual qw(:log), -default_logger
     => Log::Contextual::WarnLogger->new({ env_prefix => __PACKAGE__ });
 
+use 5.010;
+use re qw(is_regexp);
+
 use RDF::Trine qw(iri);
-use Scalar::Util qw(blessed refaddr);
+use Scalar::Util qw(blessed refaddr reftype);
 use Try::Tiny;
 use Carp;
 
@@ -23,11 +26,16 @@ sub new {
 
     $src = delete $args{from} unless defined $src;
 
+    my $match = delete $args{match};
     my $code;
 
     if ( $src and not ref $src ) { # load from file
         my $model = RDF::Trine::Model->new;
-        eval { RDF::Trine::Parser->parse_file_into_model( "file:///$src", $src, $model ); };
+        if ( $src =~ /^https?:\/\// ) {
+            eval { RDF::Trine::Parser->parse_url_into_model( $src, $model ); };
+        } else {
+            eval { RDF::Trine::Parser->parse_file_into_model( "file:///$src", $src, $model ); };
+        }
         if ( @_ ) {
             log_info { "failed to loaded from $src"; }
         } else {
@@ -60,7 +68,26 @@ sub new {
     $self->{name} = $args{name} if defined $args{name};
     $self->{code} = $code;
 
+    $self->match( $match );
+
     $self;
+}
+
+sub match { # accessor
+    my $self = shift;
+    return $self->{match} unless @_;
+
+    my $match = shift;
+    if ( defined $match ) {
+        my $pattern = $match;
+        $match = sub { $_[0] =~ $pattern; }
+            if is_regexp($match);
+        croak 'url parameter must be code or regexp'.reftype($match). ": $match"
+            if reftype $match ne 'CODE';
+        $self->{match} = $match;
+    } else {
+        $self->{match} = undef;
+    }
 }
 
 sub retrieve {
@@ -70,7 +97,20 @@ sub retrieve {
         sprintf "retrieve from %s with %s", about($self), rdflow_uri($env);
     };
     $self->timestamp( $env );
-    $self->has_retrieved( $self->retrieve_rdf( $env ) );
+
+    my $result;
+    if ( $self->{match} ) {
+        if ( $self->{match}->( $env->{'rdflow.uri'} ) ) {
+            $result = $self->retrieve_rdf( $env );
+        } else {
+            log_trace { "URI did not match: " . $env->{'rdflow.uri'} };
+            $result = RDF::Trine::Model->new;
+        }
+    } else {
+        $result = $self->retrieve_rdf( $env );
+    }
+
+    return $self->has_retrieved( $result );
 }
 
 sub retrieve_rdf {
@@ -83,8 +123,6 @@ sub retrieve_rdf {
         RDF::Trine::Model->new;
     }
 }
-
-
 
 sub pipe_to { # TODO: document this
     my ($self, $next) = @_;
@@ -184,6 +222,7 @@ sub size {
 
 =head1 SYNOPSIS
 
+    $src = rdflow( "mydata.ttl", name => "RDF file as source" );
     $src = rdflow( \&mysource, name => "code reference as source" );
     $src = rdflow( $model, name => "RDF::Trine::Model as source" );
 
@@ -199,9 +238,11 @@ sub size {
         return $model;
     }
 
-=method new ( $source {, name => $name } )
+=method new ( $from {, %configuration } )
 
-Create a new RDF source by wrapping a code reference or a L<RDF::Trine::Model>.
+Create a new RDF source by wrapping a code reference, a L<RDF::Trine::Model>,
+or loading RDF data from a file or URL.
+
 If you pass an existing RDF::Flow::Source object, it will not be wrapped.
 
 A source returns RDF data as instance of L<RDF::Trine::Model> or
@@ -216,6 +257,24 @@ This constructor is exported as function C<rdflow> by L<RDF::Flow>:
 
   $src = rdflow( @args );               # short form
   $src = RDF:Source->new( @args );      # explicit constructor
+
+=head1 CONFIGURATION
+
+=over 4
+
+=item name
+
+Name of the source. Defaults to "anonymous source".
+
+=item from
+
+Filename, URL, L<RDF::Trine::Model> or code reference to retrieve RDF from.
+
+=item match
+
+Optional regular expression or code reference to match and/or map request URIs.
+
+=back
 
 =method has_retrieved ( $source, $result [, $message ] )
 
