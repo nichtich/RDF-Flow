@@ -30,6 +30,8 @@ sub sourcelist_args {
 
 sub iterator_to_model {
     my $iterator = shift;
+    return $iterator if $iterator->isa('RDF::Trine::Model');
+
     my $model = shift || RDF::Trine::Model->new;
 
     $model->begin_bulk_ops;
@@ -88,17 +90,17 @@ This module exports some method to be used in source modules.
 
 Prepares and returns a request URI, as given by an evironment hash or by an
 existing URI. Sets C<rdflow.uri> if an environment has been given. URI
-construction is based on code from L<Plack>. It used the environment variables
+construction is based on code from L<Plack>, as described in the request format
+at L<RDF::Flow::Source>. The following environment variables are used:
 C<psgi.url_scheme>, C<HTTP_HOST> or C<SERVER_NAME>, C<SERVER_PORT>,
 C<SCRIPT_NAME>, C<PATH_INFO>, C<QUERY_STRING>, and C<rdflow.ignorepath>.
-See L<RDF::Flow> for documentation.
 
 =head2 sourcelist_args ( @_ )
 
 Parses a list of inputs (code or other references) mixed with key-value pairs
 and returns both separated in an array and and hash.
 
-=head2 iterator_to_model ( $iterator [, $model ] )
+=head2 iterator_to_model ( [ $iterator ] [, $model ] )
 
 Adds all statements from a L<RDF::Trine::Iterator> to a (possibly new)
 L<RDF::Trine::Model> model and returns the model.

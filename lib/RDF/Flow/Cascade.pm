@@ -56,7 +56,7 @@ sub retrieve { # TODO: try/catch errors?
     }
 
     $self->timestamp( $env );
-    $self->has_retrieved( $rdf, "%s returned $i. with %s" );
+    $self->trigger_retrieved( $rdf, "%s returned $i. with %s" );
 }
 
 sub _graphviz_edgeattr {

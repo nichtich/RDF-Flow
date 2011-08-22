@@ -1,7 +1,8 @@
 # Change file for RDF::Flow
 
-0.173 2011-08-16
+0.174 2011-08-17
     New source option 'match' instead of 'url'
+    Introduced 'init' and renamed 'trigger_retrieved' and 'trigger_error'
 
 0.172 2011-08-11
     Support reading from file and minor fixes

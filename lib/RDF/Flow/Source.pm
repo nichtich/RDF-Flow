@@ -29,6 +29,8 @@ sub new {
     my $match = delete $args{match};
     my $code;
 
+    my $self = bless { }, $class;
+
     if ( $src and not ref $src ) { # load from file
         my $model = RDF::Trine::Model->new;
         if ( $src =~ /^https?:\/\// ) {
@@ -45,9 +47,14 @@ sub new {
     }
 
     if (blessed $src and $src->isa('RDF::Flow::Source')) {
-        return $src; # don't wrap
+        $self->{from} = $src;
+        $code = sub {
+            $src->retrieve( @_ );
+        };
+        # return $src; # don't wrap
         # TODO: use args to modify object!
     } elsif ( blessed $src and $src->isa('RDF::Trine::Model') ) {
+        $self->{from} = $src;
         $code = sub {
             my $uri = rdflow_uri( shift );
             iterator_to_model( $src->bounded_description(
@@ -64,14 +71,17 @@ sub new {
         croak 'expected RDF::Source, RDF::Trine::Model, or code reference'
     }
 
-    my $self = bless { }, $class;
     $self->{name} = $args{name} if defined $args{name};
     $self->{code} = $code;
 
     $self->match( $match );
 
+    $self->init();
+
     $self;
 }
+
+sub init { }
 
 sub match { # accessor
     my $self = shift;
@@ -110,7 +120,7 @@ sub retrieve {
         $result = $self->retrieve_rdf( $env );
     }
 
-    return $self->has_retrieved( $result );
+    return $self->trigger_retrieved( $result );
 }
 
 sub retrieve_rdf {
@@ -119,7 +129,7 @@ sub retrieve_rdf {
         $self->{code}->( $env );
     } catch {
         s/[.]?\s+$//s;
-        RDF::Flow::Source::source_error( $self, $_, $env );
+        RDF::Flow::Source::trigger_error( $self, $_, $env );
         RDF::Trine::Model->new;
     }
 }
@@ -130,14 +140,14 @@ sub pipe_to { # TODO: document this
 }
 
 
-sub source_error {
+sub trigger_error {
     my ($self, $message, $env) = @_;
     $message = 'unknown error' unless $message;
     $env->{'rdflow.error'} = $message if $env;
     log_error { $message };
 }
 
-sub has_retrieved {
+sub trigger_retrieved {
     my ($self, $result, $msg) = @_;
     log_trace {
         $msg = "%s returned %s" unless $msg;
@@ -185,7 +195,6 @@ sub _graphviz_edgeattr { }
 
 use POSIX qw(strftime);
 
-# ISO 8601 timestamp
 sub timestamp {
     my ($self, $env) = @_;
     my $now = time();
@@ -238,6 +247,14 @@ sub size {
         return $model;
     }
 
+=head1 DESCRIPTION
+
+A source is an objects with a C<retrieve> method, which returns RDF data
+on request. RDF data is always returned as instance of L<RDF::Trine::Model>
+or as instance of L<RDF::Trine::Iterator> with simple statements. The request
+format is specified below. All sources share a set of common configurations
+options.
+
 =method new ( $from {, %configuration } )
 
 Create a new RDF source by wrapping a code reference, a L<RDF::Trine::Model>,
@@ -269,14 +286,22 @@ Name of the source. Defaults to "anonymous source".
 =item from
 
 Filename, URL, L<RDF::Trine::Model> or code reference to retrieve RDF from.
+This option is not supported by all source types.
 
 =item match
 
 Optional regular expression or code reference to match and/or map request URIs.
+For instance you can rewrite URNs to HTTP URIs like this:
+
+    match => sub { $_[0] =~ s/^urn:isbn:/http://example.org/isbn/; }
 
 =back
 
-=method has_retrieved ( $source, $result [, $message ] )
+=method init
+
+Called from the constructor. Can be used in your sources.
+
+=method trigger_retrieved ( $source, $result [, $message ] )
 
 Creates a logging event at trace level to log that some result has been
 retrieved from a source. Returns the result. By default the logging messages is
@@ -286,35 +311,130 @@ call it, if your source only implements the method C<retrieve_rdf>.
 
 =method name
 
+Returns the name of the source.
+
 =method about
+
+Returns a string with short information (name and size) of the source.
 
 =method size
 
+Returns the number of inputs (for multi-part sources, such as
+L<RDF::Source::Union>).
+
 =method inputs
 
-=method timestamp
-
-=method source_error
+Returns a list of inputs (unstable).
 
 =method id
 
+Returns a unique id of the source, based on its memory address.
+
 =method retrieve
+
+Retrieve RDF data.
 
 =method retrieve_rdf
 
+Internal method to retrieve RDF data. Define this in your subclass.
+
 =method pipe_to
+
+Pipes the source to another source (L<RDF::Flow::Pipeline>).
+C<< $a->pipe_to($b) >> is equivalent to C<< RDF::Flow::Pipeline->new($a,$b) >>.
 
 =method cached ( $cache )
 
-Plugs a cache in front of a source. This method can also be exported as function.
-Actually, it is a shortcut for L<RDF::Flow::Cached>-E<gt>new.
+Plugs a cache (L<RDF::Flow::Cached>) in front of the source.
+
+=method timestamp
+
+Returns an ISO 8601 timestamp and possibly sets in
+C<rdflow.timestamp> environment variable.
+
+=method trigger_error
+
+Triggers an error and possibly sets the C<rdflow.error> environment variable.
 
 =method graphviz
 
-Experimental.
+Purely experimental method for visualizing nets of sources.
 
 =method graphviz_addnode
 
-Experimental.
+Purely experimental method for visualizing nets of sources.
+
+=head1 REQUEST FORMAT
+
+A valid request can either by an URI (as byte string) or a hash reference, that
+is called an environment. The environment must be a specific subset of a
+L<PSGI> environment with the following variables:
+
+=over 4
+
+=item rdflow.uri
+
+A request URI as byte string. If this variable is provided, no other variables
+are needed and the following variables will not modify this value.
+
+=item psgi.url_scheme
+
+A string C<http> (assumed if not set) or C<https>.
+
+=item HTTP_HOST
+
+The base URL of the host for constructing an URI. This or SERVER_NAME is
+required unless rdflow.uri is set.
+
+=item SERVER_NAME
+
+Name of the host for construction an URI. Only used if HTTP_HOST is not set.
+
+=item SERVER_PORT
+
+Port of the host for constructing an URI. By default C<80> is used, but not
+kept as part of an HTTP-URI due to URI normalization.
+
+=item SCRIPT_NAME
+
+Path for constructing an URI. Must start with C</> if given.
+
+=item QUERY_STRING
+
+Portion of the request URI that follows the ?, if any.
+
+=item rdflow.ignorepath
+
+If this variable is set, no query part is used when constructing an URI.
+
+=back
+
+The method reuses code from L<Plack::Request> by Tatsuhiko Miyagawa. Note that
+the environment variable REQUEST_URI is not included. When this method
+constructs a request URI from a given environment hash, it always sets the
+variable C<rdflow.uri>, so it is always guaranteed to be set after calling.
+However it may be the empty string, if an environment without HTTP_HOST or
+SERVER_NAME was provided.
+
+=head1 CREATING YOUR OWN SOURCE
+
+Basically you must only derive from RDF::Flow::Source and create the method
+C<retrieve_rdf>:
+
+    package MySource;
+    use parent 'RDF::Flow::Source';
+
+    sub retrieve_rdf {
+        my ($self, $env) = @_;
+        my $uri = $env->{'rdflow.uri'};
+
+        # ... your logic here ...
+
+        return $model;
+    }
+
+The module L<RDF::Flow::Util> contains some handy functions for creating
+sources. 
 
 =cut
+

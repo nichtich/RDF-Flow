@@ -4,7 +4,8 @@ use warnings;
 use Test::More;
 use Test::RDF;
 use RDF::Trine qw(statement iri literal);
-use RDF::Flow qw(rdflow_uri cached);
+use RDF::Trine::Iterator;
+use RDF::Flow qw(rdflow_uri cached rdflow);
 
 {
     package OneTimeCache;
@@ -12,7 +13,6 @@ use RDF::Flow qw(rdflow_uri cached);
     sub get { $_ = $_[0]->{$_[1]}; delete $_[0]->{$_[1]}; $_; }
     sub set { $_[0]->{$_[1]} = $_[2] }
 }
-my $cache = OneTimeCache->new;
 
 sub make_model {
     my $model = RDF::Trine::Model->new;
@@ -26,6 +26,7 @@ sub make_model {
 my $count = 1;
 sub counting_source { make_model( rdflow_uri(shift), $count++ ) }
 
+my $cache = OneTimeCache->new;
 my $source = cached( \&counting_source, $cache );
 
 my $env = { 'rdflow.uri' => 'x:foo' };
@@ -48,5 +49,19 @@ $env = { 'rdflow.uri' => 'x:foo' };
 $rdf = $source->retrieve( $env );
 isomorph_graphs( $rdf, make_model('x:foo', 3), 'third request: foo' );
 ok( !$env->{'rdflow.cached'}, 'not cached' );
+
+my $model = make_model('x:foo', 'bar');
+$source = rdflow( sub { $model->as_stream; } );
+$cache = OneTimeCache->new;
+$source = cached( $source, $cache );
+
+$env = { 'rdflow.uri' => 'x:foo' };
+$rdf = $source->retrieve( $env );
+isomorph_graphs( $rdf, $model, 'new from iterator source' );
+ok( !$env->{'rdflow.cached'}, 'not cached' );
+
+$env = { 'rdflow.uri' => 'x:foo' };
+$rdf = $source->retrieve( $env );
+ok( $env->{'rdflow.cached'}, 'now cached' );
 
 done_testing;

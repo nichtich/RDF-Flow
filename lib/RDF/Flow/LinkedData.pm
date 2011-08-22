@@ -31,7 +31,7 @@ sub retrieve_rdf {
         RDF::Trine::Parser->parse_url_into_model( $url, $model );
         log_debug { "retrieved data from $url" };
     } catch {
-        $self->source_error("failed to retrieve RDF from $url: $_", $env);
+        $self->trigger_error("failed to retrieve RDF from $url: $_", $env);
     };
 
     return $model;
@@ -41,13 +41,13 @@ sub retrieve_rdf {
 
 =head1 DESCRIPTION
 
-This L<RDF::Flow::Source> fetches RDF data via HTTP. The request URI is used 
+This L<RDF::Flow::Source> fetches RDF data via HTTP. The request URI is used
 as URL to get data from.
 
 =head1 CONFIGURATION
 
-This source supports the default configuration options. The following options
-are useful in particular:
+The following configuration options from L<RDF::Flow::Source> are useful in
+particular:
 
 =over 4
 

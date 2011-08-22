@@ -21,7 +21,7 @@ sub new {
         inputs => $inputs,
         name   => ($args->{name} || 'anonymous union'),
     }, $class;
-    
+
     $self->match( $args->{match} );
 
     return $self;
@@ -75,6 +75,7 @@ This L<RDF::Flow> returns the union of responses of a set of input sources.
 
 =head2 SEE ALSO
 
-L<RDF::Flow::Cascade>, L<RDF::Flow::Pipeline>
+L<RDF::Flow::Cascade>, L<RDF::Flow::Pipeline>,
+L<RDF::Trine::Model::Union>
 
 =cut

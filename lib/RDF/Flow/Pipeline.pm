@@ -20,7 +20,7 @@ sub new {
         inputs => $inputs,
         name   => ($args->{name} || 'anonymous pipeline'),
     }, $class;
-    
+
     $self->match( $args->{match} );
 
     return $self;
@@ -62,14 +62,14 @@ request.
 
     use RDF::Flow::Pipeline;
 
-    $src = pipeline( @sources );                    # shortcut
+    $src = pipeline( @sources );                  # shortcut
 
     $src = RDF::Flow::Pipeline->new( @sources );  # explicit
 
     $rdf = $src->retrieve( $env );
     $rdf == $env->{'rdflow.data'};                # always true
 
-    # pipeline as conditional: if $s1 has content then union of $1 and $2
+    # pipeline as conditional: if $s1 has content then union of $s1 and $s2
     use RDF::Flow qw(pipeline union previous);
     pipeline( $s1, union( previous, $s2 ) );
     $s1->pipe_to( union( previous, $s2) );        # equivalent

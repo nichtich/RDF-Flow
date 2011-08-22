@@ -27,7 +27,6 @@ sub new {
         name   => "cached " . $source->name,
         source => $source,
         cache  => $cache,
-        form   => ($args{form} || 'hashref'),
     }, $class;
 
     $self->match( $args{match} );
@@ -50,11 +49,9 @@ sub retrieve_rdf {
             $env->{$key} = $value;
         }
         $env->{'rdflow.cached'} = 1;
-        if ($self->{'form'} eq 'hashref') {
-            my $model = RDF::Trine::Model->new;
-            $model->add_hashref($rdf);
-            $rdf = $model;
-        }
+        my $model = RDF::Trine::Model->new;
+        $model->add_hashref($rdf);
+        $rdf = $model;
         return $rdf;
     }
 
@@ -67,9 +64,25 @@ sub retrieve_rdf {
     log_trace { 'store in cache' };
 
     $object = [$rdf,$vars];
-    if ($self->{'form'} eq 'hashref') {
-        $object->[0] = (blessed($rdf) and $rdf->isa('RDF::Trine::Model'))
-            ? $rdf->as_hashref : ( { } );
+    if (blessed($rdf) and $rdf->isa('RDF::Trine::Model')) {
+        $object->[0] = $rdf->as_hashref;
+    } elsif (blessed($rdf) and $rdf->isa('RDF::Trine::Iterator')) {
+        my @stms;
+
+        # FIXME: RDF::Trine::Iterator should also have as_hashref
+        # so we can avoid one serialization
+        my $model = RDF::Trine::Model->new;
+        $model->begin_bulk_ops;
+        while (my $s = $rdf->next) {
+            $model->add_statement( $s );
+            push @stms, $s;
+        }
+        $model->end_bulk_ops;
+        $object->[0] = $model->as_hashref;
+
+        $rdf = RDF::Trine::Iterator::Graph->new( \@stms );
+    } else {
+        $object->[0] = { };
     }
 
     $self->{cache}->set( $key, $object );
