@@ -11,8 +11,9 @@ use RDF::Flow::Cached;
 
 use base 'Exporter';
 our @EXPORT = qw(rdflow);
-our @EXPORT_OK = qw(rdflow cached union cascade pipeline previous);
-our %EXPORT_TAGS = ( all => \@EXPORT_OK );
+our @EXPORT_OK = qw(rdflow cached union cascade pipeline previous rdflow_uri);
+our %EXPORT_TAGS = ( 
+    all => [qw(rdflow cached union cascade pipeline previous)] );
 
 our $PREVIOUS = RDF::Flow::Source->new( sub { shift->{'rdflow.data'} } );
 
@@ -23,6 +24,8 @@ sub pipeline { RDF::Flow::Pipeline->new( @_ ) }
 sub cached   { RDF::Flow::Cached->new( @_ ); }
 
 sub previous { $RDF::Flow::PREVIOUS; }
+
+sub rdflow_uri { RDF::Flow::Source::rdflow_uri( @_ ); }
 
 1;
 
