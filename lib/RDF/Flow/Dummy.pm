@@ -1,11 +1,12 @@
-use strict;
+﻿use strict;
 use warnings;
 package RDF::Flow::Dummy;
 #ABSTRACT: Dummy source that always returns one trivial triple
 
 use RDF::Trine qw(statement iri);
-use RDF::Flow::Util;
+
 use parent 'RDF::Flow::Source';
+use RDF::Flow::Source qw(:util);
 
 our $rdf_type      = iri('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
 our $rdfs_Resource = iri('http://www.w3.org/2000/01/rdf-schema#Resource');

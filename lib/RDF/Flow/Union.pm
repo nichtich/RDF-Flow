@@ -1,4 +1,4 @@
-use strict;
+﻿use strict;
 use warnings;
 package RDF::Flow::Union;
 #ABSTRACT: Returns the union of multiple sources
@@ -7,15 +7,12 @@ use Log::Contextual::WarnLogger;
 use Log::Contextual qw(:log), -default_logger
     => Log::Contextual::WarnLogger->new({ env_prefix => __PACKAGE__ });
 
-use RDF::Flow::Util;
-use Carp;
-our @CARP_NOT = qw(RDF::Flow::Util);
-
+use RDF::Flow::Source qw(sourcelist_args iterator_to_model);
 use parent 'RDF::Flow::Source';
 
 sub new {
     my $class = shift;
-    my ($inputs, $args) = sourcelist_args( @_ );
+    my ($inputs, $args) = RDF::Flow::Source::sourcelist_args( @_ );
 
     my $self = bless {
         inputs => $inputs,
@@ -73,7 +70,7 @@ This L<RDF::Flow> returns the union of responses of a set of input sources.
 
     $rdf = $src->retrieve( $env );
 
-=head2 SEE ALSO
+=head1 SEE ALSO
 
 L<RDF::Flow::Cascade>, L<RDF::Flow::Pipeline>,
 L<RDF::Trine::Model::Union>

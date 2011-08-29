@@ -2,7 +2,8 @@ use strict;
 use warnings;
 
 use Test::More;
-use RDF::Flow qw(:util);
+use RDF::Flow qw(:all);
+use RDF::Flow::Source qw(rdflow_uri);
 use Scalar::Util qw(blessed);
 
 # utility methods

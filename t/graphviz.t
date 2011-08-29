@@ -1,7 +1,7 @@
 use strict;
 use Test::More;
 
-use RDF::Flow qw(:util pipeline union cascade);
+use RDF::Flow qw(:all);
 use RDF::Flow::Cached;
 
 eval "use GraphViz";

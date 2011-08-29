@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 use Test::More;
-use RDF::Flow qw(rdflow_uri);
+use RDF::Flow;
 use RDF::Flow::Dummy;
 use RDF::Trine::Serializer::Turtle;
 

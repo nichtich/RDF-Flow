@@ -8,10 +8,9 @@ use Log::Contextual qw(:log), -default_logger
     => Log::Contextual::WarnLogger->new({ env_prefix => __PACKAGE__ });
 
 use parent 'RDF::Flow::Source';
+use RDF::Flow::Source qw(:util);
 
-use RDF::Flow::Util;
 use Carp 'croak';
-our @CARP_NOT = qw(RDF::Flow::Util);
 use Scalar::Util 'blessed';
 
 sub new {
@@ -84,7 +83,7 @@ sequence of sources.
 
     $rdf = $src->retrieve( $env );
 
-=head2 SEE ALSO
+=head1 SEE ALSO
 
 L<RDF::Flow::Union>, L<RDF::Flow::Pipeline>
 

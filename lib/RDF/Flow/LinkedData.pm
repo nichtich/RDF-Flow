@@ -1,4 +1,4 @@
-use strict;
+﻿use strict;
 use warnings;
 package RDF::Flow::LinkedData;
 #ABSTRACT: Retrieve RDF from a HTTP-URI
@@ -8,13 +8,11 @@ use Log::Contextual qw(:log), -default_logger
     => Log::Contextual::WarnLogger->new({ env_prefix => __PACKAGE__ });
 
 use parent 'RDF::Flow::Source';
-use RDF::Flow::Util;
+use RDF::Flow::Source qw(:util);
 
 use Try::Tiny;
 use RDF::Trine::Model;
 use RDF::Trine::Parser;
-use Scalar::Util qw(reftype);
-use Carp;
 
 sub name {
     shift->{name} || 'anonymous LinkedData source';
@@ -42,7 +40,16 @@ sub retrieve_rdf {
 =head1 DESCRIPTION
 
 This L<RDF::Flow::Source> fetches RDF data via HTTP. The request URI is used
-as URL to get data from.
+as URL to get data from. For instance the following source retrieves RDF data
+from DBPedia, if a DBPedia or English Wikipedia URI is provided:
+
+    my $dbpedia = RDF::Flow::LinkedData->new(
+        name => "DBPedia",
+        match => sub {
+            $_[0] =~ s{^http://en\.wikipedia\.org/wiki/}{http://dbpedia.org/resource/};
+            return ($_[0] =~ qr{^http://dbpedia\.org/resource/.+});
+        }
+    );
 
 =head1 CONFIGURATION
 

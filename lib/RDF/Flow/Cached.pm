@@ -1,4 +1,4 @@
-use strict;
+﻿use strict;
 use warnings;
 package RDF::Flow::Cached;
 #ABSTRACT: Caches a source
@@ -8,6 +8,7 @@ use Log::Contextual qw(:log), -default_logger
     => Log::Contextual::WarnLogger->new({ env_prefix => __PACKAGE__ });
 
 use parent 'RDF::Flow::Source';
+use RDF::Flow::Source qw(:util);
 
 use Scalar::Util qw(blessed);
 use Carp;

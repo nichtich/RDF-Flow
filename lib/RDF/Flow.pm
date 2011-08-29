@@ -4,7 +4,6 @@ package RDF::Flow;
 #ABSTRACT: RDF data flow pipeline
 
 use RDF::Flow::Source;
-use RDF::Flow::Util qw();
 use RDF::Flow::Union;
 use RDF::Flow::Cascade;
 use RDF::Flow::Pipeline;
@@ -12,15 +11,8 @@ use RDF::Flow::Cached;
 
 use base 'Exporter';
 our @EXPORT = qw(rdflow);
-our @EXPORT_OK = qw(
-    rdflow
-    cached union cascade pipeline previous
-    rdflow_uri
-);
-our %EXPORT_TAGS = (
-    util    => [qw(rdflow rdflow_uri)],
-    sources => [qw(rdflow cached union cascade pipeline previous)],
-);
+our @EXPORT_OK = qw(rdflow cached union cascade pipeline previous);
+our %EXPORT_TAGS = ( all => \@EXPORT_OK );
 
 our $PREVIOUS = RDF::Flow::Source->new( sub { shift->{'rdflow.data'} } );
 
@@ -31,8 +23,6 @@ sub pipeline { RDF::Flow::Pipeline->new( @_ ) }
 sub cached   { RDF::Flow::Cached->new( @_ ); }
 
 sub previous { $RDF::Flow::PREVIOUS; }
-
-sub rdflow_uri { RDF::Flow::Util::rdflow_uri( @_ ); }
 
 1;
 
@@ -86,42 +76,34 @@ testing (L<RDF::Flow::Dummy>).
 =head1 EXPORTED FUNCTIONS
 
 By default this module only exports C<rdflow> as constructor shortcut.
-Additional shortcut functions can be exported on request. The C<:util>
-tag exports C<rdflow> and C<rdflow_uri> and the C<:sources> tag exports
-all functions but C<rdflow_uri>.
+Additional shortcut functions can be exported on request. The C<:all>
+tag exports all functions.
 
 =over 4
 
-=item rdflow
+=item C<rdflow>
 
 Shortcut to create a new source with L<RDF::Flow::Source>
 
-=item cached
+=item C<cached>
 
 Shortcut to create a new cached source with L<RDF::Flow::Cached>
 
-=item cascade
+=item C<cascade>
 
 Shortcut to create a new source cascade with L<RDF::Flow::Cascade>
 
-=item pipeline
+=item C<pipeline>
 
 Shortcut to create a new source pipeline with L<RDF::Flow::Pipeline>
 
-=item previous
+=item C<previous>
 
 A source that always returns C<rdflow.data> without modification.
 
-=item union
+=item C<union>
 
-Shortcut for L<RDF::Flow::Union>-E<gt>new.
-
-=item rdflow_uri ( $uri | $env )
-
-Gets and/or sets the request URI. You can either provide either a request URI
-as byte string, or an environment as hash reference. Please see
-L<RDF::Flow::Source> for a detailed specification of the request format.
-Sets C<rdflow.uri> if an environment has been given. 
+Shortcut for C<< L<RDF::Flow::Union>-E<gt>new >>.
 
 =back
 
@@ -135,6 +117,24 @@ detail, enable a simple logger:
     use Log::Contextual qw( :log ),
        -logger => Log::Contextual::SimpleLogger->new({ levels => [qw(trace)]});
 
+=head1 DEFINING NEW SOURCE TYPES
+
+Basically you must only derive from L<RDF::Flow::Source> and create the method
+C<retrieve_rdf>:
+
+    package MySource;
+    use parent 'RDF::Flow::Source';
+    use RDF::Flow::Source qw(:util); # if you need utilty functions
+
+    sub retrieve_rdf {
+        my ($self, $env) = @_;
+        my $uri = $env->{'rdflow.uri'};
+
+        # ... your logic here ...
+
+        return $model;
+    }
+
 =head2 LIMITATIONS
 
 The current version of this module does not check for circular references if
@@ -143,7 +143,8 @@ or C<rdflow.stack> will be introduced. Surely performance can also be increased.
 
 =head2 SEE ALSO
 
-You can use this module together with L<Plack::Middleware::RDF::Flow> to create
+You can use this module together with L<Plack::Middleware::RDF::Flow> (available
+at L<at github|https://github.com/nichtich/Plack-Middleware-RDF-Flow>) to create
 Linked Data applications.
 
 There are some CPAN modules for general data flow processing, such as L<Flow>
@@ -152,8 +153,8 @@ look at the PSGI toolkit L<Plack>. Some RDF sources can also be connected
 with L<RDF::Trine::Model::Union> and L<RDF::Trine::Model::StatementFilter>.
 More RDF-related Perl modules are collected at L<http://www.perlrdf.org/>.
 
-Research references on RDF pipelining can be found in the presentation
-"RDF Data Pipelines for Semantic Data Federation", not connected to
-this module: L<http://dbooth.org/2011/pipeline/>.
+Research references on RDF pipelining can be found in the presentation "RDF
+Data Pipelines for Semantic Data Federation", more elaborated and not connected
+to this module: L<http://dbooth.org/2011/pipeline/>.
 
 =cut

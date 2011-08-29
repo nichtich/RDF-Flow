@@ -5,7 +5,8 @@ use Test::More;
 use Test::RDF;
 use RDF::Trine qw(statement iri literal);
 use RDF::Trine::Iterator;
-use RDF::Flow qw(rdflow_uri cached rdflow);
+use RDF::Flow qw(cached rdflow);
+use RDF::Flow::Source qw(rdflow_uri);
 
 {
     package OneTimeCache;

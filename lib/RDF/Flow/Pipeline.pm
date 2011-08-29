@@ -8,9 +8,7 @@ use Log::Contextual qw(:log), -default_logger
     => Log::Contextual::WarnLogger->new({ env_prefix => __PACKAGE__ });
 
 use parent 'RDF::Flow::Source';
-use RDF::Flow::Util;
-use Carp 'croak';
-our @CARP_NOT = qw(RDF::Flow::Util);
+use RDF::Flow::Source qw(:util);
 
 sub new {
     my $class = shift;
@@ -74,7 +72,7 @@ request.
     pipeline( $s1, union( previous, $s2 ) );
     $s1->pipe_to( union( previous, $s2) );        # equivalent
 
-=head2 SEE ALSO
+=head1 SEE ALSO
 
 L<RDF::Flow::Cascade>, L<RDF::Flow::Union>
 

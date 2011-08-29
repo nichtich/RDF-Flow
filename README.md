@@ -4,7 +4,7 @@ RDF::Flow - RDF data flow pipeline
 
 # VERSION
 
-version 0.174
+version 0.175
 
 # SYNOPSIS
 
@@ -56,40 +56,32 @@ testing ([RDF::Flow::Dummy](http://search.cpan.org/perldoc?RDF::Flow::Dummy)).
 # EXPORTED FUNCTIONS
 
 By default this module only exports `rdflow` as constructor shortcut.
-Additional shortcut functions can be exported on request. The `:util`
-tag exports `rdflow` and `rdflow_uri` and the `:sources` tag exports
-all functions but `rdflow_uri`.
+Additional shortcut functions can be exported on request. The `:all`
+tag exports all functions.
 
-- rdflow
+- `rdflow`
 
 Shortcut to create a new source with [RDF::Flow::Source](http://search.cpan.org/perldoc?RDF::Flow::Source)
 
-- cached
+- `cached`
 
 Shortcut to create a new cached source with [RDF::Flow::Cached](http://search.cpan.org/perldoc?RDF::Flow::Cached)
 
-- cascade
+- `cascade`
 
 Shortcut to create a new source cascade with [RDF::Flow::Cascade](http://search.cpan.org/perldoc?RDF::Flow::Cascade)
 
-- pipeline
+- `pipeline`
 
 Shortcut to create a new source pipeline with [RDF::Flow::Pipeline](http://search.cpan.org/perldoc?RDF::Flow::Pipeline)
 
-- previous
+- `previous`
 
 A source that always returns `rdflow.data` without modification.
 
-- union
+- `union`
 
-Shortcut for [RDF::Flow::Union](http://search.cpan.org/perldoc?RDF::Flow::Union)->new.
-
-- rdflow_uri ( $uri | $env )
-
-Gets and/or sets the request URI. You can either provide either a request URI
-as byte string, or an environment as hash reference. Please see
-[RDF::Flow::Source](http://search.cpan.org/perldoc?RDF::Flow::Source) for a detailed specification of the request format.
-Sets `rdflow.uri` if an environment has been given. 
+Shortcut for `[RDF::Flow::Union](http://search.cpan.org/perldoc?RDF::Flow::Union)->new`.
 
 ## LOGGING
 
@@ -101,6 +93,24 @@ detail, enable a simple logger:
     use Log::Contextual qw( :log ),
        -logger => Log::Contextual::SimpleLogger->new({ levels => [qw(trace)]});
 
+# DEFINING NEW SOURCE TYPES
+
+Basically you must only derive from [RDF::Flow::Source](http://search.cpan.org/perldoc?RDF::Flow::Source) and create the method
+`retrieve_rdf`:
+
+    package MySource;
+    use parent 'RDF::Flow::Source';
+    use RDF::Flow::Source qw(:util); # if you need utilty functions
+
+    sub retrieve_rdf {
+        my ($self, $env) = @_;
+        my $uri = $env->{'rdflow.uri'};
+
+        # ... your logic here ...
+
+        return $model;
+    }
+
 ## LIMITATIONS
 
 The current version of this module does not check for circular references if
@@ -109,7 +119,8 @@ or `rdflow.stack` will be introduced. Surely performance can also be increased.
 
 ## SEE ALSO
 
-You can use this module together with [Plack::Middleware::RDF::Flow](http://search.cpan.org/perldoc?Plack::Middleware::RDF::Flow) to create
+You can use this module together with [Plack::Middleware::RDF::Flow](http://search.cpan.org/perldoc?Plack::Middleware::RDF::Flow) (available
+at [at github](https://github.com/nichtich/Plack-Middleware-RDF-Flow)) to create
 Linked Data applications.
 
 There are some CPAN modules for general data flow processing, such as [Flow](http://search.cpan.org/perldoc?Flow)
@@ -118,9 +129,9 @@ look at the PSGI toolkit [Plack](http://search.cpan.org/perldoc?Plack). Some RDF
 with [RDF::Trine::Model::Union](http://search.cpan.org/perldoc?RDF::Trine::Model::Union) and [RDF::Trine::Model::StatementFilter](http://search.cpan.org/perldoc?RDF::Trine::Model::StatementFilter).
 More RDF-related Perl modules are collected at [http://www.perlrdf.org/](http://www.perlrdf.org/).
 
-Research references on RDF pipelining can be found in the presentation
-"RDF Data Pipelines for Semantic Data Federation", not connected to
-this module: [http://dbooth.org/2011/pipeline/](http://dbooth.org/2011/pipeline/).
+Research references on RDF pipelining can be found in the presentation "RDF
+Data Pipelines for Semantic Data Federation", more elaborated and not connected
+to this module: [http://dbooth.org/2011/pipeline/](http://dbooth.org/2011/pipeline/).
 
 # AUTHOR
 

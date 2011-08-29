@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 use Test::More;
-use RDF::Flow qw(:util);
+use RDF::Flow qw(:all);
 use RDF::Flow::LinkedData;
 
 #use Log::Contextual::SimpleLogger;

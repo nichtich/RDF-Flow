@@ -4,8 +4,8 @@ use warnings;
 use Test::More;
 use Test::RDF;
 use RDF::Trine qw(statement iri);
-use RDF::Flow qw(rdflow_uri);
-use RDF::Flow::Source;
+use RDF::Flow;
+use RDF::Flow::Source qw(rdflow_uri);
 
 sub simple_source {
     my $env = shift;

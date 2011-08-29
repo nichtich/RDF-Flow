@@ -1,4 +1,4 @@
-use strict;
+﻿use strict;
 use warnings;
 package RDF::Flow::Source;
 #ABSTRACT: Source of RDF data
@@ -15,10 +15,20 @@ use Scalar::Util qw(blessed refaddr reftype);
 use Try::Tiny;
 use Carp;
 
+use URI;
+use URI::Escape;
+
+use parent 'Exporter';
+our @EXPORT_OK = qw(sourcelist_args iterator_to_model is_rdf_data rdflow_uri);
+our %EXPORT_TAGS = (
+    util => [qw(sourcelist_args iterator_to_model is_rdf_data rdflow_uri)],
+);
+
 use RDF::Trine::Model;
 use RDF::Trine::Parser;
-use RDF::Flow::Util;
-use RDF::Flow::Pipeline;
+
+#require RDF::Flow::Pipeline;
+
 
 sub new {
     my $class = shift;
@@ -134,12 +144,6 @@ sub retrieve_rdf {
     }
 }
 
-sub pipe_to { # TODO: document this
-    my ($self, $next) = @_;
-    return RDF::Flow::Pipeline->new( $self, $next );
-}
-
-
 sub trigger_error {
     my ($self, $message, $env) = @_;
     $message = 'unknown error' unless $message;
@@ -227,6 +231,78 @@ sub size {
     return scalar @{ $self->{inputs} };
 }
 
+sub sourcelist_args {
+    my ($inputs, $args) = ([],{});
+    while ( @_ ) {
+        my $s = shift @_;
+        if ( ref $s ) {
+            push @$inputs, map { RDF::Flow::Source->new($_) } $s;
+        } elsif ( defined $s ) {
+            $args->{$s} = shift @_;
+        } else {
+            croak 'undefined parameter';
+        }
+    }
+    return ($inputs, $args);
+}
+
+sub iterator_to_model {
+    my $iterator = shift;
+    return $iterator if $iterator->isa('RDF::Trine::Model');
+
+    my $model = shift || RDF::Trine::Model->new;
+
+    $model->begin_bulk_ops;
+    while (my $st = $iterator->next) {
+        $model->add_statement( $st );
+    }
+    $model->end_bulk_ops;
+
+    $model;
+}
+
+sub is_rdf_data {
+    my $rdf = shift;
+    return unless blessed $rdf;
+    return ($rdf->isa('RDF::Trine::Model') and $rdf->size > 0) ||
+           ($rdf->isa('RDF::Trine::Iterator') and $rdf->peek);
+}
+
+sub rdflow_uri {
+    my $env = shift;
+    return ($env || '') unless ref $env; # plain scalar or undef
+
+    return $env->{'rdflow.uri'} if defined $env->{'rdflow.uri'};
+
+    # a few lines of code from Plack::Request, so we don't require all of Plack
+    my $base = ($env->{'psgi.url_scheme'} || "http") .
+        "://" . ($env->{HTTP_HOST} || (($env->{SERVER_NAME} || "") .
+        ":" . ($env->{SERVER_PORT} || 80))) . ($env->{SCRIPT_NAME} || '/');
+    $base = URI->new($base)->canonical;
+
+    my $path_escape_class = '^A-Za-z0-9\-\._~/';
+
+    my $path = URI::Escape::uri_escape( $env->{PATH_INFO} || '', $path_escape_class );
+
+    $path .= '?' . $env->{QUERY_STRING} if !$env->{'rdflow.ignorepath'} &&
+        defined $env->{QUERY_STRING} && $env->{QUERY_STRING} ne '';
+
+    $base =~ s!/$!! if $path =~ m!^/!;
+
+    $env->{'rdflow.uri'} = URI->new( $base . $path )->canonical->as_string;
+
+    $env->{'rdflow.uri'} =~ s/^https?:\/\/\/$//;
+    $env->{'rdflow.uri'};
+}
+
+# put at the end to prevent circular references in require
+require RDF::Flow::Pipeline;
+
+sub pipe_to {
+   my ($self, $next) = @_;
+   return RDF::Flow::Pipeline->new( $self, $next );
+}
+
 1;
 
 =head1 SYNOPSIS
@@ -301,12 +377,22 @@ For instance you can rewrite URNs to HTTP URIs like this:
 
 Called from the constructor. Can be used in your sources.
 
+=method retrieve
+
+Retrieve RDF data.
+
+=method retrieve_rdf
+
+Internal method to retrieve RDF data. You should define this when
+L<subclassing RDF::Flow::Source|RDF::Flow/DEFINING NEW SOURCE TYPES>, it
+is called by method C<retrieve>.
+
 =method trigger_retrieved ( $source, $result [, $message ] )
 
 Creates a logging event at trace level to log that some result has been
 retrieved from a source. Returns the result. By default the logging messages is
 constructed from the source's name and the result's size. This function is
-automatically called at the end of method 'retrieve', so you do not have to
+automatically called at the end of method C<retrieve>, so you do not have to
 call it, if your source only implements the method C<retrieve_rdf>.
 
 =method name
@@ -329,14 +415,6 @@ Returns a list of inputs (unstable).
 =method id
 
 Returns a unique id of the source, based on its memory address.
-
-=method retrieve
-
-Retrieve RDF data.
-
-=method retrieve_rdf
-
-Internal method to retrieve RDF data. Define this in your subclass.
 
 =method pipe_to
 
@@ -372,38 +450,38 @@ L<PSGI> environment with the following variables:
 
 =over 4
 
-=item rdflow.uri
+=item C<rdflow.uri>
 
 A request URI as byte string. If this variable is provided, no other variables
 are needed and the following variables will not modify this value.
 
-=item psgi.url_scheme
+=item C<psgi.url_scheme>
 
 A string C<http> (assumed if not set) or C<https>.
 
-=item HTTP_HOST
+=item C<HTTP_HOST>
 
 The base URL of the host for constructing an URI. This or SERVER_NAME is
 required unless rdflow.uri is set.
 
-=item SERVER_NAME
+=item C<SERVER_NAME>
 
 Name of the host for construction an URI. Only used if HTTP_HOST is not set.
 
-=item SERVER_PORT
+=item C<SERVER_PORT>
 
 Port of the host for constructing an URI. By default C<80> is used, but not
 kept as part of an HTTP-URI due to URI normalization.
 
-=item SCRIPT_NAME
+=item C<SCRIPT_NAME>
 
 Path for constructing an URI. Must start with C</> if given.
 
-=item QUERY_STRING
+=item C<QUERY_STRING>
 
 Portion of the request URI that follows the ?, if any.
 
-=item rdflow.ignorepath
+=item C<rdflow.ignorepath>
 
 If this variable is set, no query part is used when constructing an URI.
 
@@ -416,25 +494,32 @@ variable C<rdflow.uri>, so it is always guaranteed to be set after calling.
 However it may be the empty string, if an environment without HTTP_HOST or
 SERVER_NAME was provided.
 
-=head1 CREATING YOUR OWN SOURCE
+=head1 FUNCTIONS
 
-Basically you must only derive from RDF::Flow::Source and create the method
-C<retrieve_rdf>:
+The following functions are defined to be used in custom source types.
 
-    package MySource;
-    use parent 'RDF::Flow::Source';
+=head2 rdflow_uri ( $env | $uri )
 
-    sub retrieve_rdf {
-        my ($self, $env) = @_;
-        my $uri = $env->{'rdflow.uri'};
+Prepares and returns a request URI, as given by an evironment hash or by an
+existing URI. Sets C<rdflow.uri> if an environment has been given. URI
+construction is based on code from L<Plack>, as described in the L</REQUEST
+FORMAT>. The following environment variables are used: C<psgi.url_scheme>,
+C<HTTP_HOST> or C<SERVER_NAME>, C<SERVER_PORT>, C<SCRIPT_NAME>, C<PATH_INFO>,
+C<QUERY_STRING>, and C<rdflow.ignorepath>.
 
-        # ... your logic here ...
+=head2 sourcelist_args ( @_ )
 
-        return $model;
-    }
+Parses a list of inputs (code or other references) mixed with key-value pairs
+and returns both separated in an array and and hash.
 
-The module L<RDF::Flow::Util> contains some handy functions for creating
-sources. 
+=head2 iterator_to_model ( [ $iterator ] [, $model ] )
+
+Adds all statements from a L<RDF::Trine::Iterator> to a (possibly new)
+L<RDF::Trine::Model> model and returns the model.
+
+=head2 is_rdf_data ( $rdf )
+
+Checks whether the argument is a non-empty L<RDF::Trine::Model> or a
+non-empty L<RDF::Trine::Iterator>.
 
 =cut
-
