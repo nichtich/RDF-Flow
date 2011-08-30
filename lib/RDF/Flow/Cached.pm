@@ -31,6 +31,7 @@ sub new {
     }, $class;
 
     $self->match( $args{match} );
+    $self->guard( $args{guard} );
 
     $self;
 }
@@ -40,31 +41,47 @@ sub retrieve_rdf {
     my $env  = shift;
 
     my $key = $env->{'rdflow.uri'};
+	my $rdf;
 
-    # get from the cache
-    my $object = $self->{cache}->get( $key );
-    if (defined $object) {
-        log_trace { 'got from cache' };
-        my ($rdf, $vars) = @{$object};
-        while ( my ($key, $value) = each %$vars ) {
-            $env->{$key} = $value;
-        }
-        $env->{'rdflow.cached'} = 1;
-        my $model = RDF::Trine::Model->new;
-        $model->add_hashref($rdf);
-        $rdf = $model;
-        return $rdf;
-    }
+	# guarded, but no guard there (never was or expired)
+	if ( $self->guard && !$self->guard->get( $key ) ) {
 
-    # this sets timestamp and logs
-    my $rdf = $self->{source}->retrieve( $env );
-    my $vars = {
-        map { $_ => $env->{$_} }
-        grep { $_ =~ /^rdflow\./ } keys %$env
-    };
+		$rdf = $self->{source}->retrieve( $env );
+		if ( empty_rdf($rdf) ) {
+			# better get from cache
+			$rdf = $self->_get_cache($env);
+		} else {
+			# update
+			$rdf = $self->_set_cache( $rdf, $env );
+		}
+		$self->guard->set( $key, 1 );
+
+	} else {
+
+		# get from cache
+		$rdf = $self->_get_cache( $env );
+		unless ( $rdf ) {
+			# get from source and store in cache
+			$rdf = $self->{source}->retrieve( $env );
+			$rdf = $self->_set_cache( $rdf, $env );
+		}
+	}
+
+	return $rdf
+}
+
+sub _set_cache {
+	my ($self, $rdf, $env) = @_;
+	my $key = $env->{'rdflow.uri'};
+
     log_trace { 'store in cache' };
 
-    $object = [$rdf,$vars];
+	my $vars = {
+		map { $_ => $env->{$_} }
+		grep { $_ =~ /^rdflow\./ } keys %$env
+	};
+
+    my $object = [$rdf,$vars];
     if (blessed($rdf) and $rdf->isa('RDF::Trine::Model')) {
         $object->[0] = $rdf->as_hashref;
     } elsif (blessed($rdf) and $rdf->isa('RDF::Trine::Iterator')) {
@@ -91,9 +108,30 @@ sub retrieve_rdf {
     return $rdf;
 }
 
+sub _get_cache {
+	my ($self, $env) = @_;
+
+    my $obj = $self->{cache}->get( $env->{'rdflow.uri'} ) || return;
+
+    log_trace { 'got from cache' };
+    my ($rdf, $vars) = @{$obj};
+    while ( my ($key, $value) = each %$vars ) {
+        $env->{$key} = $value;
+    }
+    $env->{'rdflow.cached'} = 1;
+    my $model = RDF::Trine::Model->new;
+    $model->add_hashref($rdf);
+    return $model;
+}
+
 sub inputs {
     return (shift->{source});
 }
+
+sub guard {
+	return $_[0]->{'guard'} if scalar( @_ ) == 1;
+    return $_[0]->{'guard'} = $_[1];
+};
 
 1;
 
@@ -121,6 +159,29 @@ cached response when it was first retrieved and stored in the cache.
 
   use RDF::Flow qw(cached);
   my $cached_source = cached( $source, $cache );       # alternative syntax
+
+  # guarded cache
+  my $cached = cached( $source, $cache, guard => $quick_cache );
+
+=head1 CONFIGURATION
+
+You can also use a cached source to guard against unreliable sources, which
+sometimes just return nothing, for instance because of a failure.  To do so,
+use a quickly expiring second cache as "guard". This guard is not used to
+actually store data, but only to save the information that some data (at least
+one triple) has been retrieved from the source. The source is not queried
+again, until the guard expires. If, afterwards, the source returns no data,
+data is returned from the cache instead. A possible setting is to use a
+non-expiring cache as backend, guared by a another cache;
+
+  use CHI;
+  my $store = CHI->new( driver => 'File', root_dir => '/path/to/root' );
+  my $guard = CHI->new( driver => 'Memory', global => 1 );
+
+  my $cached = cached( $source, $store, guard => $guard );
+
+However be sure not to use the same cache (C<root_dir>, C<global>...) for
+caching different sources!
 
 =head1 SEE ALSO
 

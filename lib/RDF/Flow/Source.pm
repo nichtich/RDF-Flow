@@ -19,9 +19,9 @@ use URI;
 use URI::Escape;
 
 use parent 'Exporter';
-our @EXPORT_OK = qw(sourcelist_args iterator_to_model is_rdf_data rdflow_uri);
+our @EXPORT_OK = qw(sourcelist_args iterator_to_model empty_rdf rdflow_uri);
 our %EXPORT_TAGS = (
-    util => [qw(sourcelist_args iterator_to_model is_rdf_data rdflow_uri)],
+    util => [qw(sourcelist_args iterator_to_model empty_rdf rdflow_uri)],
 );
 
 use RDF::Trine::Model;
@@ -210,7 +210,9 @@ sub timestamp {
     return $timestamp;
 }
 
-sub cached   { RDF::Flow::Cached->new( @_ ); }
+sub cached {
+	RDF::Flow::Cached->new( @_ );
+}
 
 sub name {
     shift->{name} || 'anonymous source';
@@ -261,11 +263,15 @@ sub iterator_to_model {
     $model;
 }
 
-sub is_rdf_data {
+sub empty_rdf {
     my $rdf = shift;
-    return unless blessed $rdf;
-    return ($rdf->isa('RDF::Trine::Model') and $rdf->size > 0) ||
-           ($rdf->isa('RDF::Trine::Iterator') and $rdf->peek);
+    return 1 unless blessed $rdf;
+   	return !($rdf->isa('RDF::Trine::Model') and $rdf->size > 0) &&
+           !($rdf->isa('RDF::Trine::Iterator') and $rdf->peek);
+}
+
+sub is_rdf_data { # TODO: remove
+    return !empty_rdf(shift);
 }
 
 sub rdflow_uri {
@@ -517,9 +523,9 @@ and returns both separated in an array and and hash.
 Adds all statements from a L<RDF::Trine::Iterator> to a (possibly new)
 L<RDF::Trine::Model> model and returns the model.
 
-=head2 is_rdf_data ( $rdf )
+=head2 empty_rdf ( $rdf )
 
-Checks whether the argument is a non-empty L<RDF::Trine::Model> or a
+Returns true unless the argument is a non-empty L<RDF::Trine::Model> or a
 non-empty L<RDF::Trine::Iterator>.
 
 =cut

@@ -30,7 +30,7 @@ sub retrieve_rdf {
     foreach my $src ( $self->inputs ) {
         my $rdf = $src->retrieve( $env );
         $env->{'rdflow.data'} = $rdf;
-        last unless is_rdf_data( $rdf );
+        last if empty_rdf( $rdf );
     }
 
     $env->{'rdflow.data'};
