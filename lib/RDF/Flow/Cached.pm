@@ -9,7 +9,6 @@ use Log::Contextual qw(:log), -default_logger
 
 use parent 'RDF::Flow::Source';
 use RDF::Flow::Source qw(:util);
-
 use Scalar::Util qw(blessed);
 use Carp;
 
@@ -181,7 +180,7 @@ non-expiring cache as backend, guared by a another cache;
   my $cached = cached( $source, $store, guard => $guard );
 
 However be sure not to use the same cache (C<root_dir>, C<global>...) for
-caching different sources!
+caching different sources.
 
 =head1 SEE ALSO
 

@@ -120,8 +120,10 @@ sub retrieve {
 
     my $result;
     if ( $self->{match} ) {
+        my $uri = $env->{'rdflow.uri'};
         if ( $self->{match}->( $env->{'rdflow.uri'} ) ) {
             $result = $self->retrieve_rdf( $env );
+            $env->{'rdflow.uri'} = $uri;
         } else {
             log_trace { "URI did not match: " . $env->{'rdflow.uri'} };
             $result = RDF::Trine::Model->new;
@@ -376,6 +378,8 @@ Optional regular expression or code reference to match and/or map request URIs.
 For instance you can rewrite URNs to HTTP URIs like this:
 
     match => sub { $_[0] =~ s/^urn:isbn:/http://example.org/isbn/; }
+
+The URI in C<rdflow.uri> is set back to its original value after retrieval.
 
 =back
 

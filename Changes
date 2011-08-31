@@ -1,7 +1,7 @@
 # Change file for RDF::Flow
 
 0.175 2011-08-30
-    Added guarded caches
+    Added guarded caches. First release at CPAN
 
 0.174 2011-08-17
     New source option 'match' instead of 'url'
