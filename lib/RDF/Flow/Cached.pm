@@ -182,6 +182,10 @@ non-expiring cache as backend, guared by a another cache;
 However be sure not to use the same cache (C<root_dir>, C<global>...) for
 caching different sources.
 
+=method guard
+
+You can get and/or set a guarding cache with this accessor.
+
 =head1 SEE ALSO
 
 L<Plack::Middleware::Cached> implements almost the same mechanism for caching

@@ -272,10 +272,6 @@ sub empty_rdf {
            !($rdf->isa('RDF::Trine::Iterator') and $rdf->peek);
 }
 
-sub is_rdf_data { # TODO: remove
-    return !empty_rdf(shift);
-}
-
 sub rdflow_uri {
     my $env = shift;
     return ($env || '') unless ref $env; # plain scalar or undef

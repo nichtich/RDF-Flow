@@ -9,7 +9,7 @@ use RDF::Flow qw(cached rdflow);
 use RDF::Flow::Source qw(rdflow_uri empty_rdf);
 
 {
-	package OneTimeCache; # expires after being accessed once
+    package OneTimeCache; # expires after being accessed once
     sub new { bless { }, shift }
     sub get { $_ = $_[0]->{$_[1]}; delete $_[0]->{$_[1]}; $_; }
     sub set { $_[0]->{$_[1]} = $_[2] }
@@ -30,7 +30,7 @@ sub amodel {
 
 my $count = 1;
 sub counting_source {
-	amodel( rdflow_uri(shift), $count++ )
+    amodel( rdflow_uri(shift), $count++ )
 }
 
 my $cache = OneTimeCache->new;
@@ -77,11 +77,11 @@ my $guard = OneTimeCache->new;
 
 my $do_source = 1;
 $source = cached(
-	sub {
-		amodel( rdflow_uri(shift), $count++ ) if $do_source;
-	},
-	EternalCache->new,
-	guard => $guard
+    sub {
+        amodel( rdflow_uri(shift), $count++ ) if $do_source;
+    },
+    EternalCache->new,
+    guard => $guard
 );
 
 # first call: no guard, no cache, so the source is used
