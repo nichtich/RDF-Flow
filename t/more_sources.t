@@ -8,7 +8,7 @@ use RDF::Flow::Union;
 use RDF::Trine::Model;
 use RDF::Trine qw(iri statement);
 
-my $f = rdflow( from => 't/example.ttl' );
+my $f = rdflow( from => 't/data/example.ttl' );
 my $rdf = $f->retrieve('http://example.org/foo');
 is ( $rdf->size, 1, 'from file' );
 
@@ -46,5 +46,12 @@ $source = sub { die "boo!"; };
 #  name => 'Empty source',
 #  source => sub { } ),
 #  request => '/foo'
+
+
+## directory as source
+
+$f = rdflow( from => 't/data' );
+$rdf = $f->retrieve('http://example.org/foo');
+is ( $rdf->size, 3, 'from directory' );
 
 done_testing;

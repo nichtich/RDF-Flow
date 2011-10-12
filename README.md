@@ -4,12 +4,13 @@ RDF::Flow - RDF data flow pipeline
 
 # VERSION
 
-version 0.175
+version 0.176
 
 # SYNOPSIS
 
     # define RDF sources (see RDF::Flow::Source)
     $src = rdflow( "mydata.ttl", name => "RDF file as source" );
+    $src = rdflow( "mydirectory", name => "directory with RDF files as source" );
     $src = rdflow( \&mysub, name => "code reference as source" );
     $src = rdflow( $model,  name => "RDF::Trine::Model as source" );
 
@@ -45,13 +46,12 @@ can retrieve RDF data from it, based on a request URI:
                          ^
                 Data (possibly RDF)
 
-The base class to define RDF sources is [RDF::Flow::Source](http://search.cpan.org/perldoc?RDF::Flow::Source), which can be used
-to access RDF parsed from files or via HTTP, from a [RDF::Trine::Store](http://search.cpan.org/perldoc?RDF::Trine::Store), or
-from a custom method. Please have a look at the documentation of this class.
-Predefined sources exist to combine sources ([RDF::Flow::Union](http://search.cpan.org/perldoc?RDF::Flow::Union),
-[RDF::Flow::Pipeline](http://search.cpan.org/perldoc?RDF::Flow::Pipeline), [RDF::Flow::Cascade](http://search.cpan.org/perldoc?RDF::Flow::Cascade)), to access LinkedData
-([RDF::Flow::LinkedData](http://search.cpan.org/perldoc?RDF::Flow::LinkedData)), to cache requests ([RDF::Flow::Cached](http://search.cpan.org/perldoc?RDF::Flow::Cached)), and for
-testing ([RDF::Flow::Dummy](http://search.cpan.org/perldoc?RDF::Flow::Dummy)).
+The base class to define RDF sources is [RDF::Flow::Source](http://search.cpan.org/perldoc?RDF::Flow::Source), so please have a
+look at the documentation of this class. Multiple sources can be connected to
+data flow networks: Predefined sources exist to combine sources
+([RDF::Flow::Union](http://search.cpan.org/perldoc?RDF::Flow::Union), [RDF::Flow::Pipeline](http://search.cpan.org/perldoc?RDF::Flow::Pipeline), [RDF::Flow::Cascade](http://search.cpan.org/perldoc?RDF::Flow::Cascade)), to access
+LinkedData ([RDF::Flow::LinkedData](http://search.cpan.org/perldoc?RDF::Flow::LinkedData)), to cache requests
+([RDF::Flow::Cached](http://search.cpan.org/perldoc?RDF::Flow::Cached)), and for testing ([RDF::Flow::Dummy](http://search.cpan.org/perldoc?RDF::Flow::Dummy)).
 
 # EXPORTED FUNCTIONS
 
@@ -131,7 +131,9 @@ More RDF-related Perl modules are collected at [http://www.perlrdf.org/](http://
 
 Research references on RDF pipelining can be found in the presentation "RDF
 Data Pipelines for Semantic Data Federation", more elaborated and not connected
-to this module: [http://dbooth.org/2011/pipeline/](http://dbooth.org/2011/pipeline/).
+to this module: [http://dbooth.org/2011/pipeline/](http://dbooth.org/2011/pipeline/). Another framework for
+RDF integration based on a pipe model is RDF Gears: 
+[https://bitbucket.org/feliksik/rdfgears/](https://bitbucket.org/feliksik/rdfgears/).
 
 # AUTHOR
 

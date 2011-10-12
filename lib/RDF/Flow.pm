@@ -31,6 +31,7 @@ sub previous { $RDF::Flow::PREVIOUS; }
 
     # define RDF sources (see RDF::Flow::Source)
     $src = rdflow( "mydata.ttl", name => "RDF file as source" );
+    $src = rdflow( "mydirectory", name => "directory with RDF files as source" );
     $src = rdflow( \&mysub, name => "code reference as source" );
     $src = rdflow( $model,  name => "RDF::Trine::Model as source" );
 
@@ -66,13 +67,12 @@ can retrieve RDF data from it, based on a request URI:
                          ^
                 Data (possibly RDF)
 
-The base class to define RDF sources is L<RDF::Flow::Source>, which can be used
-to access RDF parsed from files or via HTTP, from a L<RDF::Trine::Store>, or
-from a custom method. Please have a look at the documentation of this class.
-Predefined sources exist to combine sources (L<RDF::Flow::Union>,
-L<RDF::Flow::Pipeline>, L<RDF::Flow::Cascade>), to access LinkedData
-(L<RDF::Flow::LinkedData>), to cache requests (L<RDF::Flow::Cached>), and for
-testing (L<RDF::Flow::Dummy>).
+The base class to define RDF sources is L<RDF::Flow::Source>, so please have a
+look at the documentation of this class. Multiple sources can be connected to
+data flow networks: Predefined sources exist to combine sources
+(L<RDF::Flow::Union>, L<RDF::Flow::Pipeline>, L<RDF::Flow::Cascade>), to access
+LinkedData (L<RDF::Flow::LinkedData>), to cache requests
+(L<RDF::Flow::Cached>), and for testing (L<RDF::Flow::Dummy>).
 
 =head1 EXPORTED FUNCTIONS
 
@@ -156,6 +156,8 @@ More RDF-related Perl modules are collected at L<http://www.perlrdf.org/>.
 
 Research references on RDF pipelining can be found in the presentation "RDF
 Data Pipelines for Semantic Data Federation", more elaborated and not connected
-to this module: L<http://dbooth.org/2011/pipeline/>.
+to this module: L<http://dbooth.org/2011/pipeline/>. Another framework for
+RDF integration based on a pipe model is RDF Gears:
+L<https://bitbucket.org/feliksik/rdfgears/>.
 
 =cut

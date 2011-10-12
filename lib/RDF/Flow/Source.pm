@@ -17,6 +17,7 @@ use Carp;
 
 use URI;
 use URI::Escape;
+use File::Spec::Functions;
 
 use parent 'Exporter';
 our @EXPORT_OK = qw(sourcelist_args iterator_to_model empty_rdf rdflow_uri);
@@ -41,18 +42,37 @@ sub new {
 
     my $self = bless { }, $class;
 
-    if ( $src and not ref $src ) { # load from file
+    if ( $src and not ref $src ) { # load from file or directory
         my $model = RDF::Trine::Model->new;
+        my @files;
         if ( $src =~ /^https?:\/\// ) {
             eval { RDF::Trine::Parser->parse_url_into_model( $src, $model ); };
+            goto CHECK;
         } else {
+            if ( -d $src ) {
+                if ( opendir(DIR, $src) ) {
+                    my $ext = join ('|', keys %RDF::Trine::Parser::file_extensions);
+                    @files = map { catfile($src,$_) } grep(/\.($ext)$/,readdir(DIR));
+                    closedir DIR;
+                } else {
+                    log_warn { "failed to open directory $src"; }
+                }
+            } else {
+                @files = ($src);
+            }
+        }
+
+        while ($src = shift @files) {
             eval { RDF::Trine::Parser->parse_file_into_model( "file:///$src", $src, $model ); };
+
+            CHECK: # yes, it's an evil goto statement jump target :-)
+            if ( @_ ) {
+                log_warn { "failed to load from $src"; }
+            } else {
+                log_info { "loaded from $src"; }
+            }
         }
-        if ( @_ ) {
-            log_info { "failed to loaded from $src"; }
-        } else {
-            log_info { "loaded from $src"; }
-        }
+
         $src = $model;
     }
 
@@ -312,6 +332,7 @@ sub pipe_to {
 =head1 SYNOPSIS
 
     $src = rdflow( "mydata.ttl", name => "RDF file as source" );
+    $src = rdflow( "mydirectory", name => "directory with RDF files as source" );
     $src = rdflow( \&mysource, name => "code reference as source" );
     $src = rdflow( $model, name => "RDF::Trine::Model as source" );
 
@@ -329,11 +350,13 @@ sub pipe_to {
 
 =head1 DESCRIPTION
 
-A source is an objects with a C<retrieve> method, which returns RDF data
-on request. RDF data is always returned as instance of L<RDF::Trine::Model>
-or as instance of L<RDF::Trine::Iterator> with simple statements. The request
-format is specified below. All sources share a set of common configurations
-options.
+Each RDF::Flow::Source provides a C<retrieve> method, which returns RDF data on
+request. RDF data is always returned as instance of L<RDF::Trine::Model> or as
+instance of L<RDF::Trine::Iterator> with simple statements. The
+L<request format|/REQUEST FORMAT> is specified below. Sources can access RDF
+for instance parsed from a file or multiple files in a directory, via HTTP,
+from a L<RDF::Trine::Store>, or from a custom method. All sources share a set
+of common configurations options.
 
 =method new ( $from {, %configuration } )
 
@@ -365,8 +388,8 @@ Name of the source. Defaults to "anonymous source".
 
 =item from
 
-Filename, URL, L<RDF::Trine::Model> or code reference to retrieve RDF from.
-This option is not supported by all source types.
+Filename, URL, directory, L<RDF::Trine::Model> or code reference to retrieve
+RDF from. This option is not supported by all source types.
 
 =item match
 
