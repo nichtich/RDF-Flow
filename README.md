@@ -4,7 +4,7 @@ RDF::Flow - RDF data flow pipeline
 
 # VERSION
 
-version 0.176
+version 0.177
 
 # SYNOPSIS
 
@@ -61,19 +61,19 @@ tag exports all functions.
 
 - `rdflow`
 
-Shortcut to create a new source with [RDF::Flow::Source](http://search.cpan.org/perldoc?RDF::Flow::Source)
+Shortcut to create a new source with [RDF::Flow::Source](http://search.cpan.org/perldoc?RDF::Flow::Source).
 
 - `cached`
 
-Shortcut to create a new cached source with [RDF::Flow::Cached](http://search.cpan.org/perldoc?RDF::Flow::Cached)
+Shortcut to create a new cached source with [RDF::Flow::Cached](http://search.cpan.org/perldoc?RDF::Flow::Cached).
 
 - `cascade`
 
-Shortcut to create a new source cascade with [RDF::Flow::Cascade](http://search.cpan.org/perldoc?RDF::Flow::Cascade)
+Shortcut to create a new source cascade with [RDF::Flow::Cascade](http://search.cpan.org/perldoc?RDF::Flow::Cascade).
 
 - `pipeline`
 
-Shortcut to create a new source pipeline with [RDF::Flow::Pipeline](http://search.cpan.org/perldoc?RDF::Flow::Pipeline)
+Shortcut to create a new source pipeline with [RDF::Flow::Pipeline](http://search.cpan.org/perldoc?RDF::Flow::Pipeline).
 
 - `previous`
 
@@ -81,7 +81,7 @@ A source that always returns `rdflow.data` without modification.
 
 - `union`
 
-Shortcut for `[RDF::Flow::Union](http://search.cpan.org/perldoc?RDF::Flow::Union)->new`.
+Shortcut to create a new union of sources with [RDF::Flow::Union](http://search.cpan.org/perldoc?RDF::Flow::Union).
 
 ## LOGGING
 
@@ -111,16 +111,16 @@ Basically you must only derive from [RDF::Flow::Source](http://search.cpan.org/p
         return $model;
     }
 
-## LIMITATIONS
+# LIMITATIONS
 
 The current version of this module does not check for circular references if
 you connect multiple sources.  Maybe environment variable such as `rdflow.depth`
 or `rdflow.stack` will be introduced. Surely performance can also be increased.
 
-## SEE ALSO
+# SEE ALSO
 
 You can use this module together with [Plack::Middleware::RDF::Flow](http://search.cpan.org/perldoc?Plack::Middleware::RDF::Flow) (available
-at [at github](https://github.com/nichtich/Plack-Middleware-RDF-Flow)) to create
+at [at github](http://search.cpan.org/perldoc?https:#/github.com/nichtich/Plack-Middleware-RDF-Flow)) to create
 Linked Data applications.
 
 There are some CPAN modules for general data flow processing, such as [Flow](http://search.cpan.org/perldoc?Flow)
@@ -132,7 +132,7 @@ More RDF-related Perl modules are collected at [http://www.perlrdf.org/](http://
 Research references on RDF pipelining can be found in the presentation "RDF
 Data Pipelines for Semantic Data Federation", more elaborated and not connected
 to this module: [http://dbooth.org/2011/pipeline/](http://dbooth.org/2011/pipeline/). Another framework for
-RDF integration based on a pipe model is RDF Gears: 
+RDF integration based on a pipe model is RDF Gears:
 [https://bitbucket.org/feliksik/rdfgears/](https://bitbucket.org/feliksik/rdfgears/).
 
 # AUTHOR

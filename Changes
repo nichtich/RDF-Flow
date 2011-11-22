@@ -1,5 +1,8 @@
 # Change file for RDF::Flow
 
+0.177 2011-11-22
+    Fixed test failure because timestamp differs among OSes
+
 0.176 2011-10-12
     Support reading all RDF files from a directory as source
     

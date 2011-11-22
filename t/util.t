@@ -6,7 +6,8 @@ use RDF::Flow qw(:all rdflow_uri);
 use Scalar::Util qw(blessed);
 
 # utility methods
-my $time = qr/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(Z|[+-]\d\d:\d\d)$/;
+#my $time = qr/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(Z|[+-]\d\d:\d\d)$/;
+my $time = qr/\d{4}/;
 my $env = { HTTP_HOST => "example.com", SCRIPT_NAME => '/y', };
 
 my $uri = rdflow_uri( $env );

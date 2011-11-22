@@ -84,19 +84,19 @@ tag exports all functions.
 
 =item C<rdflow>
 
-Shortcut to create a new source with L<RDF::Flow::Source>
+Shortcut to create a new source with L<RDF::Flow::Source>.
 
 =item C<cached>
 
-Shortcut to create a new cached source with L<RDF::Flow::Cached>
+Shortcut to create a new cached source with L<RDF::Flow::Cached>.
 
 =item C<cascade>
 
-Shortcut to create a new source cascade with L<RDF::Flow::Cascade>
+Shortcut to create a new source cascade with L<RDF::Flow::Cascade>.
 
 =item C<pipeline>
 
-Shortcut to create a new source pipeline with L<RDF::Flow::Pipeline>
+Shortcut to create a new source pipeline with L<RDF::Flow::Pipeline>.
 
 =item C<previous>
 
@@ -104,7 +104,7 @@ A source that always returns C<rdflow.data> without modification.
 
 =item C<union>
 
-Shortcut for C<< L<RDF::Flow::Union>-E<gt>new >>.
+Shortcut to create a new union of sources with L<RDF::Flow::Union>.
 
 =back
 
@@ -136,13 +136,13 @@ C<retrieve_rdf>:
         return $model;
     }
 
-=head2 LIMITATIONS
+=head1 LIMITATIONS
 
 The current version of this module does not check for circular references if
 you connect multiple sources.  Maybe environment variable such as C<rdflow.depth>
 or C<rdflow.stack> will be introduced. Surely performance can also be increased.
 
-=head2 SEE ALSO
+=head1 SEE ALSO
 
 You can use this module together with L<Plack::Middleware::RDF::Flow> (available
 at L<at github|https://github.com/nichtich/Plack-Middleware-RDF-Flow>) to create
