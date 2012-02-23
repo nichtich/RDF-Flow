@@ -4,7 +4,7 @@ RDF::Flow - RDF data flow pipeline
 
 # VERSION
 
-version 0.177
+version 0.178
 
 # SYNOPSIS
 
@@ -120,7 +120,7 @@ or `rdflow.stack` will be introduced. Surely performance can also be increased.
 # SEE ALSO
 
 You can use this module together with [Plack::Middleware::RDF::Flow](http://search.cpan.org/perldoc?Plack::Middleware::RDF::Flow) (available
-at [at github](http://search.cpan.org/perldoc?https:#/github.com/nichtich/Plack-Middleware-RDF-Flow)) to create
+at [at github](https://github.com/nichtich/Plack-Middleware-RDF-Flow)) to create
 Linked Data applications.
 
 There are some CPAN modules for general data flow processing, such as [Flow](http://search.cpan.org/perldoc?Flow)

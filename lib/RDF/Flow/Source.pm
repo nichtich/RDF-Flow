@@ -30,7 +30,6 @@ use RDF::Trine::Parser;
 
 #require RDF::Flow::Pipeline;
 
-
 sub new {
     my $class = shift;
     my ($src, %args) = ref($_[0]) ?  @_ : (undef,@_);
@@ -232,10 +231,6 @@ sub timestamp {
     return $timestamp;
 }
 
-sub cached {
-	RDF::Flow::Cached->new( @_ );
-}
-
 sub name {
     shift->{name} || 'anonymous source';
 }
@@ -408,7 +403,9 @@ Called from the constructor. Can be used in your sources.
 
 =method retrieve
 
-Retrieve RDF data.
+Retrieve RDF data. Always returns an instance of L<RDF::Trine::Model> or
+L<RDF::Trine::Iterator>. You can use the method L</empty_rdf> to check
+whether the RDF data contains some triples or not.
 
 =method retrieve_rdf
 
@@ -435,7 +432,7 @@ Returns a string with short information (name and size) of the source.
 =method size
 
 Returns the number of inputs (for multi-part sources, such as
-L<RDF::Source::Union>).
+L<RDF::Flow::Source::Union>).
 
 =method inputs
 
@@ -449,10 +446,6 @@ Returns a unique id of the source, based on its memory address.
 
 Pipes the source to another source (L<RDF::Flow::Pipeline>).
 C<< $a->pipe_to($b) >> is equivalent to C<< RDF::Flow::Pipeline->new($a,$b) >>.
-
-=method cached ( $cache )
-
-Plugs a cache (L<RDF::Flow::Cached>) in front of the source.
 
 =method timestamp
 
@@ -548,7 +541,7 @@ L<RDF::Trine::Model> model and returns the model.
 
 =head2 empty_rdf ( $rdf )
 
-Returns true unless the argument is a non-empty L<RDF::Trine::Model> or a
-non-empty L<RDF::Trine::Iterator>.
+Returns true if the argument is an empty L<RDF::Trine::Model>, an
+empty L<RDF::Trine::Iterator>, or no RDF data at all.
 
 =cut

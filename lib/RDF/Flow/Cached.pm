@@ -18,10 +18,10 @@ sub new {
     my $cache  = shift;
     my (%args) = @_;
 
-    # TODO: check $source and $cache
     croak "missing source" unless $source;
 
-    $source = RDF::Flow::rdflow($source);
+    $source = RDF::Flow::Source->new( $source )
+        unless blessed $source and $source->isa('RDF::Flow::Source');
 
     my $self = bless {
         name   => "cached " . $source->name,

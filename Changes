@@ -1,5 +1,8 @@
 # Change file for RDF::Flow
 
+0.178 2012-02-23
+    Minor fixes
+
 0.177 2011-11-22
     Fixed test failure because timestamp differs among OSes
 
